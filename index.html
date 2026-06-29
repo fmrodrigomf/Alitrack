@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AliTrack">
+<meta name="theme-color" content="#1baf7a">
+<title>AliTrack</title>
+<style>
+  :root {
+    --green: #1baf7a;
+    --green-dark: #148f63;
+    --green-light: #e8f8ef;
+    --green-text: #0a6b3c;
+    --blue: #2a78d6;
+    --amber: #eda100;
+    --amber-light: #fff8e1;
+    --amber-text: #b07800;
+    --red: #e34948;
+    --red-light: #fdecea;
+    --red-text: #9b2a2a;
+    --bg: #f5f5f3;
+    --surface: #ffffff;
+    --surface-2: #f9f9f7;
+    --border: rgba(0,0,0,0.09);
+    --border-strong: rgba(0,0,0,0.15);
+    --text: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #898781;
+    --radius: 10px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-top: env(safe-area-inset-top, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111110;
+      --surface: #1c1c1a;
+      --surface-2: #242422;
+      --border: rgba(255,255,255,0.08);
+      --border-strong: rgba(255,255,255,0.14);
+      --text: #f5f5f3;
+      --text-secondary: #b0afa8;
+      --text-muted: #6b6a66;
+      --green-light: #0d2e1e;
+      --green-text: #5dd4a0;
+      --amber-light: #2a2200;
+      --amber-text: #f5c842;
+      --red-light: #2a0e0e;
+      --red-text: #f08080;
+    }
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100%;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Layout ── */
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding-top: var(--safe-top);
+  }
+  .topbar {
+    background: var(--surface);
+    border-bottom: 0.5px solid var(--border);
+    padding: 0 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .logo { font-size: 20px; font-weight: 600; letter-spacing: -0.5px; color: var(--text); }
+  .logo span { color: var(--green); }
+  .logo-sub { font-size: 11px; color: var(--text-muted); font-weight: 400; margin-left: 6px; }
+
+  /* ── Pages ── */
+  .pages {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  .page { display: none; padding: 1rem 1.25rem; padding-bottom: calc(80px + var(--safe-bottom)); }
+  .page.active { display: block; }
+
+  /* ── Bottom nav ── */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0; right: 0;
+    background: var(--surface);
+    border-top: 0.5px solid var(--border);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding-bottom: var(--safe-bottom);
+    z-index: 20;
+    flex-shrink: 0;
+  }
+  .nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 10px 0 8px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 10px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: color .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .nav-btn .nav-icon { font-size: 22px; line-height: 1; }
+  .nav-btn.active { color: var(--green); }
+  .nav-btn:active { opacity: 0.7; }
+
+  /* ── Cards & KPIs ── */
+  .kpi-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+  @media (min-width: 600px) { .kpi-row { grid-template-columns: repeat(4, 1fr); } }
+  .kpi {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border);
+    padding: .85rem 1rem;
+  }
+  .kpi-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+  .kpi-val { font-size: 20px; font-weight: 600; color: var(--text); line-height: 1.2; }
+  .kpi-val.green { color: var(--green); }
+
+  .card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 14px;
+    padding: 1.1rem 1.25rem;
+    margin-bottom: .9rem;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: .9rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .card-title svg { flex-shrink: 0; }
+
+  /* ── Charts ── */
+  .chart-wrap { position: relative; height: 200px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: .9rem; }
+  @media (max-width: 500px) { .two-col { grid-template-columns: 1fr; } }
+  .two-col .card { margin-bottom: 0; }
+
+  /* ── Gauge ── */
+  .gauge-wrap { display: flex; flex-direction: column; align-items: center; padding: .5rem 0 .25rem; }
+  .gauge-score { font-size: 34px; font-weight: 600; margin-top: 4px; line-height: 1; }
+  .gauge-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .score-badge {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    padding: 3px 12px; border-radius: 20px; margin-top: 8px; letter-spacing: .02em;
+  }
+  .badge-good { background: var(--green-light); color: var(--green-text); }
+  .badge-avg  { background: var(--amber-light); color: var(--amber-text); }
+  .badge-bad  { background: var(--red-light);   color: var(--red-text); }
+
+  /* ── Donut legend ── */
+  .donut-row { display: flex; gap: 1rem; align-items: center; }
+  .donut-legend { font-size: 12px; color: var(--text-secondary); line-height: 2.2; }
+  .legend-dot { width: 9px; height: 9px; border-radius: 2px; display: inline-block; margin-right: 5px; }
+
+  /* ── Forms ── */
+  .form-section {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 14px;
+    padding: 1.1rem 1.25rem;
+    margin-bottom: .9rem;
+  }
+  .form-title {
+    font-size: 13px; font-weight: 600; color: var(--text);
+    margin-bottom: .9rem; text-transform: uppercase; letter-spacing: .04em;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .field { margin-bottom: .75rem; }
+  .field label { font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px; }
+  .field input, .field select {
+    width: 100%; padding: 10px 12px;
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border-strong);
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: 15px;
+    font-family: inherit;
+    -webkit-appearance: none;
+    appearance: none;
+    outline: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--green); }
+  .field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23898781' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px; }
+  .form-row { display: grid; gap: 8px; }
+  .form-row-2 { grid-template-columns: 1fr 1fr; }
+  .form-row-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .btn-add {
+    width: 100%; padding: 12px;
+    border-radius: var(--radius);
+    border: none;
+    background: var(--green);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    margin-top: .25rem;
+    transition: opacity .15s;
+    -webkit-tap-highlight-color: transparent;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn-add:active { opacity: 0.8; }
+  .preview-box {
+    background: var(--surface-2); border-radius: var(--radius);
+    border: 0.5px solid var(--border); padding: .7rem .9rem;
+    font-size: 12px; color: var(--text-secondary);
+    margin-top: .75rem; display: none;
+    line-height: 1.6;
+  }
+  .preview-box strong { color: var(--text); }
+
+  /* ── Catalogue ── */
+  .snack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 8px; margin-top: .5rem; }
+  .snack-card {
+    background: var(--surface-2); border-radius: var(--radius);
+    border: 0.5px solid var(--border); padding: .8rem .9rem;
+  }
+  .snack-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .snack-meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+  .snack-score-txt { font-size: 12px; font-weight: 600; margin-top: 6px; }
+  .snack-note { font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.4; }
+  .new-badge {
+    display: inline-block; font-size: 9px; font-weight: 700;
+    padding: 1px 6px; border-radius: 8px; margin-left: 5px;
+    background: var(--green-light); color: var(--green-text); vertical-align: middle;
+  }
+
+  /* ── History ── */
+  .history-list { display: flex; flex-direction: column; gap: 0; }
+  .history-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 0.5px solid var(--border);
+  }
+  .history-item:last-child { border-bottom: none; }
+  .h-icon {
+    width: 34px; height: 34px; border-radius: 9px;
+    background: var(--surface-2); border: 0.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 16px;
+  }
+  .h-main { flex: 1; min-width: 0; }
+  .h-desc { font-size: 14px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .h-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .h-right { text-align: right; flex-shrink: 0; }
+  .h-prix { font-size: 14px; font-weight: 600; color: var(--text); }
+  .score-pill {
+    display: inline-block; font-size: 10px; font-weight: 600;
+    padding: 2px 7px; border-radius: 8px; margin-top: 3px;
+  }
+  .s-good { background: var(--green-light); color: var(--green-text); }
+  .s-avg  { background: var(--amber-light); color: var(--amber-text); }
+  .s-bad  { background: var(--red-light);   color: var(--red-text); }
+  .del-btn {
+    background: none; border: none; color: var(--text-muted);
+    cursor: pointer; padding: 6px; border-radius: 8px;
+    font-size: 16px; flex-shrink: 0; -webkit-tap-highlight-color: transparent;
+  }
+  .del-btn:active { background: var(--red-light); color: var(--red); }
+
+  .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); font-size: 14px; }
+  .empty-icon { font-size: 40px; margin-bottom: .75rem; }
+  .section-head { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin: .75rem 0 .5rem; }
+
+  /* ── Mode switcher ── */
+  .mode-switcher {
+    display: grid; grid-template-columns: 1fr 1fr;
+    background: var(--surface-2); border-radius: 14px;
+    border: 0.5px solid var(--border); padding: 4px; gap: 4px;
+    margin-bottom: 1rem;
+  }
+  .mode-btn {
+    padding: 11px; border-radius: 10px; border: none; background: none;
+    font-size: 15px; font-weight: 600; color: var(--text-muted);
+    cursor: pointer; font-family: inherit; transition: all .18s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mode-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+  #mode-btn-repas.active { color: #2a78d6; }
+  #mode-btn-snack.active { color: #eda100; }
+
+  /* ── Extra form box ── */
+  .extra-form-box {
+    background: var(--surface-2); border-radius: var(--radius);
+    border: 0.5px solid var(--border); padding: .8rem;
+  }
+  .btn-outline {
+    width: 100%; padding: 9px; border-radius: var(--radius);
+    background: var(--surface); color: var(--green);
+    border: 1.5px solid var(--green); font-size: 13px; font-weight: 600;
+    font-family: inherit; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; gap: 5px;
+    -webkit-tap-highlight-color: transparent; transition: opacity .15s;
+  }
+  .btn-outline:active { opacity: 0.7; }
+  .btn-outline-amber { color: var(--amber); border-color: var(--amber); }
+  .btn-save { font-size: 15px; padding: 13px; border-radius: 12px; }
+  .btn-amber { background: var(--amber); }
+  .btn-amber:active { opacity: 0.8; }
+
+  .detail-toggle {
+    font-size: 11px; font-weight: 600; padding: 5px 10px;
+    border-radius: 8px; border: 1px solid var(--green);
+    background: none; color: var(--green); cursor: pointer;
+    font-family: inherit; transition: all .15s; white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .detail-toggle.on { background: var(--green); color: #fff; }
+  .detail-toggle-amber { border-color: var(--amber); color: var(--amber); }
+  .detail-toggle-amber.on { background: var(--amber); color: #fff; }
+
+  /* ── Extras builder ── */
+  .extra-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; background: var(--surface-2);
+    border: 0.5px solid var(--border); border-radius: var(--radius);
+    margin-bottom: 6px; font-size: 13px;
+  }
+  .extra-item-icon { font-size: 16px; flex-shrink: 0; }
+  .extra-item-name { flex: 1; font-weight: 500; color: var(--text); }
+  .extra-item-score { font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 7px; flex-shrink: 0; }
+  .extra-item-prix { font-size: 13px; font-weight: 600; color: var(--text); flex-shrink: 0; }
+  .extra-item-del { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 2px 4px; border-radius: 6px; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
+  .extra-item-del:active { background: var(--red-light); color: var(--red); }
+  .extras-empty { font-size: 12px; color: var(--text-muted); text-align: center; padding: .5rem 0; }
+
+  /* ── Score slider (repas) ── */
+  .score-slider-wrap { margin-bottom: .75rem; }
+  .score-slider-wrap label { font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 6px; }
+  .score-slider-row { display: flex; align-items: center; gap: 10px; }
+  .score-slider-row input[type=range] {
+    flex: 1; -webkit-appearance: none; appearance: none;
+    height: 5px; border-radius: 3px; outline: none; border: none;
+    background: linear-gradient(to right, #e34948 0%, #eda100 40%, #1baf7a 100%);
+    padding: 0;
+  }
+  .score-slider-row input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--surface); border: 2px solid var(--green);
+    box-shadow: 0 1px 4px rgba(0,0,0,.2); cursor: pointer;
+  }
+  .score-slider-row input[type=range]::-moz-range-thumb {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--surface); border: 2px solid var(--green); cursor: pointer;
+  }
+  .score-display {
+    min-width: 48px; text-align: center; font-size: 15px; font-weight: 700;
+    padding: 4px 8px; border-radius: 8px; transition: color .15s;
+  }
+
+  /* ── Gauge period selector ── */
+  .gauge-period-row { display: flex; gap: 5px; margin-bottom: 6px; flex-wrap: wrap; }
+  .gauge-period-btn {
+    flex: 1; padding: 6px 4px; border-radius: 8px; border: 0.5px solid var(--border-strong);
+    background: var(--surface-2); color: var(--text-muted); font-size: 12px; font-weight: 500;
+    font-family: inherit; cursor: pointer; transition: all .15s; min-width: 42px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .gauge-period-btn.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .gauge-period-btn:active { opacity: 0.7; }
+  .gauge-period-label { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; text-align: center; }
+  .gauge-breakdown {
+    display: flex; align-items: center; justify-content: space-around;
+    padding: .75rem 0 .1rem; border-top: 0.5px solid var(--border); margin-top: .5rem;
+  }
+  .gauge-bk-item { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .gauge-bk-icon { font-size: 16px; }
+  .gauge-bk-label { font-size: 10px; color: var(--text-muted); }
+  .gauge-bk-val { font-size: 15px; font-weight: 700; }
+  .gauge-bk-sep { width: 0.5px; height: 36px; background: var(--border); }
+
+  /* ── Hydratation ── */
+  .hydra-card { margin-bottom: .9rem; }
+  .hydra-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: .9rem; }
+  .hydra-ml { font-size: 26px; font-weight: 700; line-height: 1; }
+  .hydra-ml span { font-size: 14px; font-weight: 400; color: var(--text-muted); }
+  .hydra-goal { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .hydra-badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+  .hydra-track { width: 100%; height: 12px; background: var(--surface-2); border-radius: 6px; overflow: hidden; margin-bottom: .7rem; border: 0.5px solid var(--border); }
+  .hydra-fill { height: 100%; border-radius: 6px; transition: width .4s ease; min-width: 4px; }
+  .hydra-drops { display: flex; gap: 6px; flex-wrap: wrap; margin-top: .6rem; }
+  .drop-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-secondary); background: var(--surface-2); border: 0.5px solid var(--border); border-radius: 8px; padding: 3px 8px; }
+  .hydra-avg-row { display: flex; justify-content: space-between; align-items: center; padding-top: .6rem; border-top: 0.5px solid var(--border); margin-top: .6rem; }
+  .hydra-avg-label { font-size: 12px; color: var(--text-muted); }
+  .hydra-avg-val { font-size: 13px; font-weight: 600; color: var(--text); }
+  .hydra-chart-wrap { position: relative; height: 100px; margin-top: .75rem; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed; bottom: calc(72px + var(--safe-bottom) + 12px); left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--text); color: var(--bg);
+    padding: 10px 18px; border-radius: 20px; font-size: 13px; font-weight: 500;
+    opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none;
+    white-space: nowrap; z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Scrollbar */
+  .pages::-webkit-scrollbar { width: 4px; }
+  .pages::-webkit-scrollbar-track { background: transparent; }
+  .pages::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="logo">Ali<span>Track</span><span class="logo-sub">Suivi alimentaire</span></div>
+  </div>
+
+  <div class="pages">
+
+    <!-- ══ DASHBOARD ══ -->
+    <div id="page-dashboard" class="page active">
+      <div class="kpi-row">
+        <div class="kpi"><div class="kpi-label">Aujourd'hui</div><div class="kpi-val" id="kpi-today">0.00 CHF</div></div>
+        <div class="kpi"><div class="kpi-label">Cette semaine</div><div class="kpi-val" id="kpi-week">0.00 CHF</div></div>
+        <div class="kpi"><div class="kpi-label">Ce mois</div><div class="kpi-val" id="kpi-month">0.00 CHF</div></div>
+        <div class="kpi"><div class="kpi-label">Score global</div><div class="kpi-val green" id="kpi-score">—</div></div>
+      </div>
+
+      <!-- Scores nourriture vs boissons -->
+      <div class="card" style="margin-bottom:.9rem">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          Qualité nutritionnelle — aujourd'hui
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:.9rem">
+          <div style="text-align:center">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">🍽️ Nourriture</div>
+            <div style="font-size:26px;font-weight:700" id="score-food-today">—</div>
+            <div style="font-size:10px;color:var(--text-muted)" id="score-food-label">—</div>
+          </div>
+          <div style="text-align:center;border-left:0.5px solid var(--border);border-right:0.5px solid var(--border)">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">💧 Boissons</div>
+            <div style="font-size:26px;font-weight:700" id="score-drink-today">—</div>
+            <div style="font-size:10px;color:var(--text-muted)" id="score-drink-label">—</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">⭐ Moyenne</div>
+            <div style="font-size:26px;font-weight:700" id="score-avg-today">—</div>
+            <div style="font-size:10px;color:var(--text-muted)" id="score-avg-label">—</div>
+          </div>
+        </div>
+        <!-- 7-day dual line chart -->
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Évolution sur 7 jours</div>
+        <div style="display:flex;gap:12px;margin-bottom:6px;font-size:11px">
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#2a78d6;margin-right:4px"></span>Nourriture</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#1baf7a;margin-right:4px"></span>Boissons</span>
+          <span><span style="display:inline-block;width:10px;height:2px;background:#898781;margin-right:4px;vertical-align:middle"></span>Moyenne</span>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-sante" role="img" aria-label="Évolution du score santé nourriture et boissons"></canvas></div>
+      </div>
+
+      <div class="card" style="margin-bottom:.9rem">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="4" height="18" rx="1"/><rect x="10" y="8" width="4" height="13" rx="1"/><rect x="17" y="5" width="4" height="16" rx="1"/></svg>
+          Dépenses / jour
+          <span style="margin-left:auto;display:flex;gap:10px;font-size:11px;font-weight:400;color:var(--text-muted)">
+            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#2a78d6;margin-right:3px"></span>Repas</span>
+            <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#eda100;margin-right:3px"></span>Snacks</span>
+          </span>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-depenses" role="img" aria-label="Dépenses des 7 derniers jours"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+          Répartition des dépenses
+        </div>
+        <div class="donut-row">
+          <div style="position:relative;height:140px;width:140px;flex-shrink:0">
+            <canvas id="chart-repartition" role="img" aria-label="Répartition repas snacks boissons" width="140" height="140"></canvas>
+          </div>
+          <div class="donut-legend" id="donut-legend"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          Jauge santé globale
+        </div>
+        <!-- Period selector -->
+        <div class="gauge-period-row">
+          <button class="gauge-period-btn active" data-days="7"   onclick="setGaugePeriod(7,this)">7 j</button>
+          <button class="gauge-period-btn"         data-days="30"  onclick="setGaugePeriod(30,this)">30 j</button>
+          <button class="gauge-period-btn"         data-days="90"  onclick="setGaugePeriod(90,this)">3 mois</button>
+          <button class="gauge-period-btn"         data-days="180" onclick="setGaugePeriod(180,this)">6 mois</button>
+          <button class="gauge-period-btn"         data-days="0"   onclick="setGaugePeriod(0,this)">Tout</button>
+        </div>
+        <div class="gauge-period-label" id="gauge-period-label">Sur les 7 derniers jours</div>
+        <div class="gauge-wrap">
+          <canvas id="chart-gauge" width="280" height="148" role="img" aria-label="Jauge du score santé global"></canvas>
+          <div class="gauge-score" id="gauge-val">—</div>
+          <div class="gauge-label" id="gauge-sublabel">score nutritionnel moyen</div>
+          <div class="score-badge badge-avg" id="gauge-badge">En attente de données</div>
+        </div>
+        <!-- food vs drink breakdown inside gauge -->
+        <div class="gauge-breakdown" id="gauge-breakdown">
+          <div class="gauge-bk-item">
+            <span class="gauge-bk-icon">🍽️</span>
+            <span class="gauge-bk-label">Nourriture</span>
+            <span class="gauge-bk-val" id="gauge-food-val">—</span>
+          </div>
+          <div class="gauge-bk-sep"></div>
+          <div class="gauge-bk-item">
+            <span class="gauge-bk-icon">💧</span>
+            <span class="gauge-bk-label">Boissons</span>
+            <span class="gauge-bk-val" id="gauge-drink-val">—</span>
+          </div>
+          <div class="gauge-bk-sep"></div>
+          <div class="gauge-bk-item">
+            <span class="gauge-bk-icon">📅</span>
+            <span class="gauge-bk-label">Entrées</span>
+            <span class="gauge-bk-val" id="gauge-count-val" style="color:var(--text-muted)">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card hydra-card">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+          Hydratation aujourd'hui
+        </div>
+        <div class="hydra-top">
+          <div>
+            <div class="hydra-ml" id="hydra-ml">0 <span>ml</span></div>
+            <div class="hydra-goal" id="hydra-goal">objectif : 2 000 ml</div>
+          </div>
+          <div class="hydra-badge badge-avg" id="hydra-badge">—</div>
+        </div>
+        <div class="hydra-track"><div class="hydra-fill" id="hydra-fill" style="width:0%;background:#2a78d6"></div></div>
+        <div class="drop-item" style="font-size:12px;color:var(--text-muted);margin-bottom:.4rem" id="hydra-pct">0% de l'objectif atteint</div>
+        <div class="hydra-drops" id="hydra-drops"></div>
+        <div class="hydra-avg-row">
+          <span class="hydra-avg-label">Moyenne 7 jours</span>
+          <span class="hydra-avg-val" id="hydra-avg">— ml/jour</span>
+        </div>
+        <div class="hydra-chart-wrap"><canvas id="chart-hydra" role="img" aria-label="Hydratation des 7 derniers jours"></canvas></div>
+      </div>
+    </div>
+    <div id="page-ajouter" class="page">
+
+      <!-- ── Sélecteur de mode ── -->
+      <div class="mode-switcher">
+        <button class="mode-btn active" id="mode-btn-repas" onclick="switchMode('repas')">
+          🍽️ Repas
+        </button>
+        <button class="mode-btn" id="mode-btn-snack" onclick="switchMode('snack')">
+          🍫 Snack
+        </button>
+      </div>
+
+      <!-- ════ BUILDER REPAS ════ -->
+      <div id="builder-repas">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:.75rem;line-height:1.5">
+          Un repas complet (midi, soir…). Un prix global pour tout, ou détaille si tu veux.
+        </div>
+
+        <!-- Date + total -->
+        <div class="form-section" style="margin-bottom:.7rem">
+          <div class="form-row form-row-2" style="margin-bottom:0">
+            <div class="field" style="margin-bottom:0"><label>Date</label><input type="date" id="repas-date"></div>
+            <div style="display:flex;flex-direction:column;justify-content:flex-end">
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">Total</div>
+              <div style="font-size:20px;font-weight:700;color:var(--text)" id="builder-total">0.00 CHF</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Plat + prix global -->
+        <div class="form-section">
+          <div class="form-title" style="color:#2a78d6">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+            Repas
+          </div>
+          <div class="field">
+            <label>Plat</label>
+            <select id="repas-plat-sel" onchange="applyPlatPreset()" style="margin-bottom:6px">
+              <option value="">— Choisir dans le catalogue ou saisir ci-dessous —</option>
+              <optgroup label="🍱 Plats chauds Coop">
+                <option value="Coop — Plat gras (lasagne, gratin…)">Plat gras (lasagne, gratin…)</option>
+                <option value="Coop — Plat standard (pasta, burger…)">Plat standard (pasta, burger…)</option>
+                <option value="Coop — Plat légumes & protéines">Plat légumes &amp; protéines</option>
+              </optgroup>
+              <optgroup label="🍽️ Plats maison / courants">
+                <option value="Riz + viande (poulet, bœuf…)">Riz + viande (poulet, bœuf…)</option>
+                <option value="Pâtes + sauce tomate">Pâtes + sauce tomate</option>
+                <option value="Pâtes + sauce crème / carbonara">Pâtes + sauce crème / carbonara</option>
+                <option value="Salade composée + protéines">Salade composée + protéines</option>
+                <option value="Sandwich / wrap maison">Sandwich / wrap maison</option>
+                <option value="Pizza (surgelée ou livrée)">Pizza (surgelée ou livrée)</option>
+                <option value="Soupe / velouté de légumes">Soupe / velouté de légumes</option>
+                <option value="Œufs (omelette, brouillés…)">Œufs (omelette, brouillés…)</option>
+                <option value="Burger (fast-food ou maison)">Burger (fast-food ou maison)</option>
+                <option value="Poisson + légumes">Poisson + légumes</option>
+              </optgroup>
+            </select>
+            <input type="text" id="repas-desc" placeholder="Ou décris librement : ex. lasagne Coop, döner…">
+          </div>
+          <div class="preview-box" id="repas-plat-preview"></div>
+
+          <!-- Prix global (toujours visible) -->
+          <div class="field" id="repas-prix-global-wrap">
+            <label>Prix total du repas (CHF)</label>
+            <input type="number" id="repas-prix" placeholder="Ex : 14.50" min="0" step="0.01" inputmode="decimal" oninput="updateBuilderTotal('repas')">
+          </div>
+
+          <div class="score-slider-wrap">
+            <label>Qualité — <span id="score-repas-label" style="font-weight:600;color:#eda100">5/10 · Correct</span></label>
+            <div class="score-slider-row">
+              <span style="font-size:11px;color:var(--text-muted)">1</span>
+              <input type="range" id="repas-score" min="1" max="10" value="5" step="1" oninput="updateRepasScore(this.value)">
+              <span style="font-size:11px;color:var(--text-muted)">10</span>
+              <div class="score-display" id="repas-score-display" style="color:#eda100">5</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accompagnements (masqués par défaut) -->
+        <div class="form-section">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">
+            <div class="form-title" style="color:#2a78d6;margin-bottom:0">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Boissons &amp; accompagnements
+            </div>
+            <button class="detail-toggle" id="repas-detail-toggle" onclick="toggleDetail('repas')">
+              Détailler les prix
+            </button>
+          </div>
+          <div id="repas-detail-hint" style="font-size:11px;color:var(--text-muted);margin-bottom:.6rem">
+            Ajoute des éléments pour le score nutritionnel — le prix global ci-dessus reste utilisé.
+          </div>
+          <div id="repas-extras-list" style="margin-bottom:.6rem"></div>
+          <div class="extra-form-box">
+            <div class="field" style="margin-bottom:.5rem"><label>Produit</label>
+              <select id="repas-extra-cat" onchange="previewItemFor('repas')">
+                <option value="">Sélectionner…</option>
+                <optgroup label="💧 Boissons"><option value="Coca-Cola">Coca-Cola</option><option value="Coca-Cola Zéro">Coca-Cola Zéro</option><option value="Red Bull">Red Bull</option><option value="Red Bull Sans Sucre">Red Bull Sans Sucre</option><option value="Red Bull Gout">Red Bull Aux Goûts</option><option value="Eau">Eau</option><option value="Thé Froid">Thé Froid</option><option value="Volvic Thé Menthe">Volvic Thé Menthe</option><option value="Focus Water Active">Focus Water Active</option></optgroup>
+                <optgroup label="🍫 Snacks"><option value="Twix">Twix</option><option value="Barre Protéinée">Barre Protéinée</option><option value="Kinder">Kinder</option><option value="Mini Pizza">Mini Pizza</option><option value="Saucisse Feuilletée">Saucisse Feuilletée</option></optgroup>
+              </select>
+            </div>
+            <div class="form-row form-row-2" style="margin-bottom:.5rem">
+              <div class="field" style="margin-bottom:0"><label>Qté</label><input type="number" id="repas-extra-qty" value="1" min="1" inputmode="numeric"></div>
+              <div class="field" style="margin-bottom:0" id="repas-extra-prix-wrap" style="display:none">
+                <label>Prix (CHF) <span id="repas-prix-optlabel" style="color:var(--text-muted);font-weight:400">(optionnel)</span></label>
+                <input type="number" id="repas-extra-prix" placeholder="—" min="0" step="0.01" inputmode="decimal">
+              </div>
+            </div>
+            <div class="preview-box" id="repas-extra-preview" style="margin-bottom:.5rem"></div>
+            <button class="btn-outline" onclick="addItemTo('repas')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Ajouter à ce repas
+            </button>
+          </div>
+        </div>
+
+        <button class="btn-add btn-save" onclick="saveSession('repas')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Enregistrer ce repas
+        </button>
+      </div>
+
+      <!-- ════ BUILDER SNACK ════ -->
+      <div id="builder-snack" style="display:none">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:.75rem;line-height:1.5">
+          Une prise rapide hors repas. Un prix global, ou détaille si tu veux.
+        </div>
+
+        <!-- Date + total -->
+        <div class="form-section" style="margin-bottom:.7rem">
+          <div class="form-row form-row-2" style="margin-bottom:0">
+            <div class="field" style="margin-bottom:0"><label>Date</label><input type="date" id="snack-date"></div>
+            <div style="display:flex;flex-direction:column;justify-content:flex-end">
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">Total</div>
+              <div style="font-size:20px;font-weight:700;color:var(--text)" id="snack-builder-total">0.00 CHF</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Prix global snack -->
+        <div class="form-section" style="margin-bottom:.7rem">
+          <div class="form-title" style="color:#eda100;margin-bottom:.7rem">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Prix global
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>Prix total du snack (CHF)</label>
+            <input type="number" id="snack-prix-global" placeholder="Ex : 3.50" min="0" step="0.01" inputmode="decimal" oninput="updateBuilderTotal('snack')">
+          </div>
+        </div>
+
+        <!-- Éléments du snack -->
+        <div class="form-section">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">
+            <div class="form-title" style="color:#eda100;margin-bottom:0">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M8 14v7m8-7v7M5 21h14"/></svg>
+              Éléments
+            </div>
+            <button class="detail-toggle detail-toggle-amber" id="snack-detail-toggle" onclick="toggleDetail('snack')">
+              Détailler les prix
+            </button>
+          </div>
+          <div id="snack-detail-hint" style="font-size:11px;color:var(--text-muted);margin-bottom:.6rem">
+            Ajoute des éléments pour le score nutritionnel — le prix global ci-dessus reste utilisé.
+          </div>
+          <div id="snack-extras-list" style="margin-bottom:.6rem"></div>
+          <div class="extra-form-box" style="border-color:rgba(237,161,0,0.25)">
+            <div class="field" style="margin-bottom:.5rem"><label>Produit</label>
+              <select id="snack-extra-cat" onchange="previewItemFor('snack')">
+                <option value="">Sélectionner…</option>
+                <optgroup label="💧 Boissons"><option value="Coca-Cola">Coca-Cola</option><option value="Coca-Cola Zéro">Coca-Cola Zéro</option><option value="Red Bull">Red Bull</option><option value="Red Bull Sans Sucre">Red Bull Sans Sucre</option><option value="Red Bull Gout">Red Bull Aux Goûts</option><option value="Eau">Eau</option><option value="Thé Froid">Thé Froid</option><option value="Volvic Thé Menthe">Volvic Thé Menthe</option><option value="Focus Water Active">Focus Water Active</option></optgroup>
+                <optgroup label="🍫 Snacks"><option value="Twix">Twix</option><option value="Barre Protéinée">Barre Protéinée</option><option value="Kinder">Kinder</option><option value="Mini Pizza">Mini Pizza</option><option value="Saucisse Feuilletée">Saucisse Feuilletée</option></optgroup>
+                <optgroup label="🍽️ Plats maison / courants"><option value="Riz + viande (poulet, bœuf…)">Riz + viande</option><option value="Pâtes + sauce tomate">Pâtes + sauce tomate</option><option value="Pâtes + sauce crème / carbonara">Pâtes carbonara</option><option value="Salade composée + protéines">Salade composée</option><option value="Sandwich / wrap maison">Sandwich / wrap</option><option value="Pizza (surgelée ou livrée)">Pizza</option><option value="Soupe / velouté de légumes">Soupe légumes</option><option value="Œufs (omelette, brouillés…)">Œufs</option><option value="Burger (fast-food ou maison)">Burger</option><option value="Poisson + légumes">Poisson + légumes</option></optgroup>
+              </select>
+            </div>
+            <div class="form-row form-row-2" style="margin-bottom:.5rem">
+              <div class="field" style="margin-bottom:0"><label>Qté</label><input type="number" id="snack-extra-qty" value="1" min="1" inputmode="numeric"></div>
+              <div class="field" style="margin-bottom:0" id="snack-extra-prix-wrap">
+                <label>Prix (CHF) <span id="snack-prix-optlabel" style="color:var(--text-muted);font-weight:400">(optionnel)</span></label>
+                <input type="number" id="snack-extra-prix" placeholder="—" min="0" step="0.01" inputmode="decimal">
+              </div>
+            </div>
+            <div class="preview-box" id="snack-extra-preview" style="margin-bottom:.5rem"></div>
+            <button class="btn-outline btn-outline-amber" onclick="addItemTo('snack')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Ajouter à ce snack
+            </button>
+          </div>
+        </div>
+
+        <button class="btn-add btn-save btn-amber" onclick="saveSession('snack')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Enregistrer ce snack
+        </button>
+      </div>
+    </div>
+
+    <!-- ══ CATALOGUE ══ -->
+    <div id="page-catalogue" class="page">
+      <div class="section-head">Plats chauds Coop &amp; repas courants</div>
+      <div class="snack-grid" id="grid-plats"></div>
+      <div class="section-head" style="margin-top:1.2rem">Boissons</div>
+      <div class="snack-grid" id="grid-boissons"></div>
+      <div class="section-head" style="margin-top:1.2rem">Snacks</div>
+      <div class="snack-grid" id="grid-snacks"></div>
+    </div>
+
+    <!-- ══ HISTORIQUE ══ -->
+    <div id="page-historique" class="page">
+      <div class="card">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z" opacity="0"/><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+          Toutes les entrées
+        </div>
+        <div class="history-list" id="history-list"></div>
+        <div class="empty-state" id="history-empty">
+          <div class="empty-icon">🥗</div>
+          Aucune entrée pour l'instant.<br>Ajoute ton premier repas !
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /pages -->
+
+  <!-- ── Bottom nav ── -->
+  <nav class="bottom-nav" role="navigation" aria-label="Navigation principale">
+    <button class="nav-btn active" onclick="showPage('dashboard',this)" aria-label="Tableau de bord">
+      <span class="nav-icon">📊</span>
+      <span>Tableau de bord</span>
+    </button>
+    <button class="nav-btn" onclick="showPage('ajouter',this)" aria-label="Ajouter">
+      <span class="nav-icon">➕</span>
+      <span>Ajouter</span>
+    </button>
+    <button class="nav-btn" onclick="showPage('catalogue',this)" aria-label="Catalogue">
+      <span class="nav-icon">📋</span>
+      <span>Catalogue</span>
+    </button>
+    <button class="nav-btn" onclick="showPage('historique',this)" aria-label="Historique">
+      <span class="nav-icon">🕐</span>
+      <span>Historique</span>
+    </button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ── Catalogue ──
+const CATALOGUE = {
+  // ── Boissons ──
+  "Coca-Cola":           {cat:"Boisson",score:2,note:"Très sucré, colorants, acide phosphorique. À limiter.",cal:139,sucres:35,emoji:"🥤",ml:330,hydra:false},
+  "Coca-Cola Zéro":      {cat:"Boisson",score:4,note:"Sans sucre mais édulcorants. Meilleur que le classique.",cal:2,sucres:0,emoji:"🥤",ml:330,hydra:true},
+  "Red Bull":            {cat:"Boisson",score:2,note:"Caféine élevée, sucres, taurine. Consommation limitée.",cal:110,sucres:27,emoji:"⚡",ml:250,hydra:false},
+  "Red Bull Sans Sucre": {cat:"Boisson",score:4,note:"Sans sucre, caféine modérée. Mieux que le classique.",cal:10,sucres:0,emoji:"⚡",ml:250,hydra:false},
+  "Red Bull Gout":       {cat:"Boisson",score:3,note:"Édulcorants + arômes artificiels. Modéré.",cal:15,sucres:0,emoji:"⚡",ml:250,hydra:false},
+  "Eau":                 {cat:"Boisson",score:10,note:"Parfait. Aucun sucre, aucune calorie, hydratation idéale.",cal:0,sucres:0,emoji:"💧",ml:500,hydra:true},
+  "Thé Froid":           {cat:"Boisson",score:5,note:"Sucré mais moins que les sodas. Variable selon la marque.",cal:35,sucres:8,emoji:"🍵",ml:330,hydra:true},
+  "Volvic Thé Menthe":   {cat:"Boisson",score:6,note:"Eau minérale légèrement sucrée, naturel.",cal:20,sucres:5,emoji:"🌿",ml:500,hydra:true},
+  "Focus Water Active":  {cat:"Boisson",score:8,note:"Eau enrichie vitamines B + électrolytes, très peu de calories. Excellent choix.",cal:15,sucres:2,emoji:"🎯",ml:500,hydra:true,isNew:false},
+  // ── Snacks ──
+  "Twix":                {cat:"Snack",score:2,note:"Riche en sucres et graisses saturées. À limiter.",cal:250,sucres:27,emoji:"🍫"},
+  "Barre Protéinée":     {cat:"Snack",score:7,note:"Bonne source de protéines selon la marque. Positif.",cal:200,sucres:8,emoji:"💪"},
+  "Kinder":              {cat:"Snack",score:3,note:"Produit lacté mais sucré, graisses élevées.",cal:110,sucres:12,emoji:"🍫"},
+  "Mini Pizza":          {cat:"Snack",score:4,note:"Glucides, sodium élevé. Pas idéal régulièrement.",cal:280,sucres:5,emoji:"🍕"},
+  "Saucisse Feuilletée": {cat:"Snack",score:3,note:"Graisses saturées élevées, produit ultra-transformé.",cal:320,sucres:3,emoji:"🌭"},
+  // ── Plats chauds Coop ──
+  "Coop — Plat gras (lasagne, gratin…)":      {cat:"Plat",score:4,note:"Graisses saturées élevées (fromage/béchamel), sodium élevé, index glycémique haut. Correct ponctuellement.",cal:480,sucres:6,emoji:"🍱"},
+  "Coop — Plat standard (pasta, burger…)":    {cat:"Plat",score:5,note:"Plat équilibré basique. Glucides corrects, protéines moyennes, sodium modéré.",cal:420,sucres:5,emoji:"🍱"},
+  "Coop — Plat légumes & protéines":          {cat:"Plat",score:6,note:"Meilleur choix Coop : légumes variés + source de protéines. Sodium encore élevé mais nutritif.",cal:380,sucres:7,emoji:"🥗"},
+  // ── Plats maison / courants ──
+  "Riz + viande (poulet, bœuf…)":             {cat:"Plat",score:7,note:"Excellent combo : glucides lents + protéines. Éviter les sauces grasses. Score haut si peu de sel ajouté.",cal:450,sucres:2,emoji:"🍚"},
+  "Pâtes + sauce tomate":                     {cat:"Plat",score:6,note:"Bon apport glucidique, sauce tomate bénéfique (lycopène). Ajouter protéines pour équilibrer.",cal:400,sucres:8,emoji:"🍝"},
+  "Pâtes + sauce crème / carbonara":          {cat:"Plat",score:4,note:"Graisses saturées élevées avec la crème. Savoureux mais lourd nutritionnellement.",cal:580,sucres:4,emoji:"🍝"},
+  "Salade composée + protéines":              {cat:"Plat",score:8,note:"Très bon choix : fibres, vitamines, protéines. Attention aux sauces grasses.",cal:320,sucres:5,emoji:"🥗"},
+  "Sandwich / wrap maison":                   {cat:"Plat",score:6,note:"Dépend du contenu. Avec légumes + protéines maigres c'est bien. Éviter sauces en excès.",cal:380,sucres:4,emoji:"🥪"},
+  "Pizza (surgelée ou livrée)":               {cat:"Plat",score:3,note:"Sodium très élevé, graisses saturées, peu de fibres. À consommer occasionnellement.",cal:650,sucres:8,emoji:"🍕"},
+  "Soupe / velouté de légumes":               {cat:"Plat",score:8,note:"Excellent : hydratant, fibres, vitamines. Faible en calories. Top en hiver.",cal:180,sucres:6,emoji:"🍲"},
+  "Œufs (omelette, brouillés…)":             {cat:"Plat",score:7,note:"Protéines complètes, graisses saines, peu de glucides. Très bon repas rapide.",cal:220,sucres:1,emoji:"🍳"},
+  "Burger (fast-food ou maison)":             {cat:"Plat",score:3,note:"Fast-food : sodium excessif, graisses saturées, portions importantes. Maison = un peu mieux.",cal:580,sucres:9,emoji:"🍔"},
+  "Poisson + légumes":                        {cat:"Plat",score:9,note:"Idéal : oméga-3, protéines maigres, vitamines. Un des meilleurs repas possibles.",cal:320,sucres:3,emoji:"🐟"},
+};
+
+// ── Helpers ──
+const scoreColor = s => s>=7?"#1baf7a":s>=4?"#eda100":"#e34948";
+const scoreClass = s => s>=7?"s-good":s>=4?"s-avg":"s-bad";
+const badgeClass = s => s>=7?"badge-good":s>=4?"badge-avg":"badge-bad";
+const badgeLabel = s => s>=7?"Bonne alimentation":s>=4?"Alimentation correcte":"À améliorer";
+const typeEmoji = t => t==='Repas'?'🍽️':t==='Boisson'?'💧':'🍫';
+const isFood  = e => e.type==='Repas'||e.type==='Snack'||e.type==='Plat';
+const isDrink = e => e.type==='Boisson';
+
+// ── Storage ──
+let entries = [];
+try { entries = JSON.parse(localStorage.getItem('alitrack_v2')||'[]'); } catch(e){}
+const save = () => { try { localStorage.setItem('alitrack_v2', JSON.stringify(entries)); } catch(e){} };
+
+// ── Toast ──
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ── Navigation ──
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(id==='dashboard') renderDashboard();
+  if(id==='historique') renderHistory();
+  if(id==='catalogue') renderCatalogue();
+}
+
+// ── Score slider repas ──
+function updateRepasScore(val) {
+  const v = parseInt(val);
+  const color = v>=7?'#1baf7a':v>=4?'#eda100':'#e34948';
+  const label = v>=7?'Excellent':v>=6?'Bon':v>=4?'Correct':v>=2?'Passable':'Mauvais';
+  document.getElementById('repas-score-display').textContent = v;
+  document.getElementById('repas-score-display').style.color = color;
+  document.getElementById('score-repas-label').textContent = v+'/10 · '+label;
+  document.getElementById('score-repas-label').style.color = color;
+}
+
+// ── Plat preset (repas builder) ──
+function applyPlatPreset() {
+  const val = document.getElementById('repas-plat-sel').value;
+  const box = document.getElementById('repas-plat-preview');
+  if(!val){box.style.display='none';return;}
+  const info = CATALOGUE[val];
+  if(!info){box.style.display='none';return;}
+  // Pre-fill description and score slider
+  document.getElementById('repas-desc').value = val;
+  document.getElementById('repas-score').value = info.score;
+  updateRepasScore(info.score);
+  const s = info.score;
+  box.style.display='block';
+  box.innerHTML=`<strong>${info.emoji} ${val}</strong> — Score suggéré : <strong style="color:${scoreColor(s)}">${s}/10</strong><br>${info.note}<br><span style="color:var(--text-muted)">~${info.cal} kcal · ${info.sucres}g sucres</span>`;
+}
+
+// ── Mode switcher ──
+function switchMode(mode) {
+  document.getElementById('builder-repas').style.display = mode==='repas'?'block':'none';
+  document.getElementById('builder-snack').style.display = mode==='snack'?'block':'none';
+  document.getElementById('mode-btn-repas').classList.toggle('active', mode==='repas');
+  document.getElementById('mode-btn-snack').classList.toggle('active', mode==='snack');
+}
+
+// ── Builder state (one per mode) ──
+const builderItems = { repas: [], snack: [] };
+
+const detailMode = { repas: false, snack: false };
+
+function toggleDetail(mode) {
+  detailMode[mode] = !detailMode[mode];
+  const on = detailMode[mode];
+  const btn = document.getElementById(mode+'-detail-toggle');
+  btn.textContent = on ? 'Masquer le détail' : 'Détailler les prix';
+  btn.classList.toggle('on', on);
+  // hint text
+  const hint = document.getElementById(mode+'-detail-hint');
+  hint.textContent = on
+    ? 'Mode détail activé — le total est calculé à partir des prix individuels.'
+    : 'Ajoute des éléments pour le score nutritionnel — le prix global ci-dessus reste utilisé.';
+  // show/hide prix field on extras and hide/show global price
+  const optLabel = document.getElementById(mode+'-prix-optlabel');
+  if(optLabel) optLabel.style.display = on ? 'none' : 'inline';
+  if(mode==='repas') {
+    const gWrap = document.getElementById('repas-prix-global-wrap');
+    if(gWrap) gWrap.style.display = on ? 'none' : 'block';
+  } else {
+    const gSection = document.getElementById('snack-prix-global');
+    if(gSection) gSection.closest('.form-section').style.display = on ? 'none' : 'block';
+  }
+  updateBuilderTotal(mode);
+}
+
+function updateBuilderTotal(mode) {
+  const totalId = mode==='repas' ? 'builder-total' : 'snack-builder-total';
+  let total = 0;
+  if(detailMode[mode]) {
+    // sum of all items with prix
+    const mainPrix = mode==='repas' ? (parseFloat(document.getElementById('repas-prix').value)||0) : 0;
+    total = mainPrix + builderItems[mode].reduce((s,e)=>s+(e.prix||0),0);
+  } else {
+    // global price field
+    const globalId = mode==='repas' ? 'repas-prix' : 'snack-prix-global';
+    total = parseFloat(document.getElementById(globalId)?.value)||0;
+  }
+  document.getElementById(totalId).textContent = total.toFixed(2)+' CHF';
+}
+
+function addItemTo(mode) {
+  const cat = document.getElementById(mode+'-extra-cat').value;
+  const qty = parseInt(document.getElementById(mode+'-extra-qty').value)||1;
+  const prixRaw = document.getElementById(mode+'-extra-prix').value;
+  const prix = prixRaw !== '' ? parseFloat(prixRaw) : null; // null = no individual price
+  if(!cat){showToast('Choisis un produit');return;}
+  if(detailMode[mode] && (prix===null||isNaN(prix)||prix<0)){showToast('Entre un prix pour cet élément');return;}
+  const info = CATALOGUE[cat];
+  builderItems[mode].push({name:cat, cat:info.cat, score:info.score, emoji:info.emoji, prix:prix||0, qty, ml:info.ml||0, hydra:info.hydra||false});
+  document.getElementById(mode+'-extra-cat').value='';
+  document.getElementById(mode+'-extra-prix').value='';
+  document.getElementById(mode+'-extra-qty').value='1';
+  document.getElementById(mode+'-extra-preview').style.display='none';
+  renderItemsList(mode);
+  if(detailMode[mode]) updateBuilderTotal(mode);
+  showToast('✅ '+cat+' ajouté');
+}
+
+function saveSession(mode) {
+  const dateVal = document.getElementById(mode==='repas'?'repas-date':'snack-date').value;
+  const entryDate = dateVal ? new Date(dateVal+'T12:00:00').toISOString() : new Date().toISOString();
+  const items = builderItems[mode];
+
+  if(mode==='repas') {
+    const desc = document.getElementById('repas-desc').value.trim();
+    const score = parseInt(document.getElementById('repas-score').value);
+    if(!desc){showToast('Décris le plat');return;}
+    // Price: global or sum of detail
+    let prix;
+    if(detailMode.repas) {
+      const mainP = parseFloat(document.getElementById('repas-prix').value)||0;
+      prix = mainP + items.reduce((s,e)=>s+(e.prix||0),0);
+    } else {
+      prix = parseFloat(document.getElementById('repas-prix').value);
+      if(isNaN(prix)||prix<0){showToast('Entre un prix pour ce repas');return;}
+    }
+    entries.push({id:Date.now(), date:entryDate, type:'Repas', desc, prix, score});
+    items.forEach((ex,i) => {
+      entries.push({id:Date.now()+i+1, date:entryDate, type:ex.cat,
+        desc:ex.name+(ex.qty>1?' ×'+ex.qty:''),
+        prix: detailMode.repas ? (ex.prix||0) : 0,
+        score:ex.score, qty:ex.qty, ml:ex.ml, hydra:ex.hydra, linkedRepas:desc});
+    });
+    document.getElementById('repas-desc').value='';
+    document.getElementById('repas-prix').value='';
+    document.getElementById('repas-score').value='5';
+    document.getElementById('repas-plat-sel').value='';
+    document.getElementById('repas-plat-preview').style.display='none';
+    updateRepasScore(5);
+    document.getElementById('repas-date').value=getTodayStr();
+    showToast('✅ Repas enregistré !');
+
+  } else {
+    if(!items.length && !document.getElementById('snack-prix-global').value){showToast('Ajoute au moins un élément');return;}
+    let prix;
+    if(detailMode.snack) {
+      prix = items.reduce((s,e)=>s+(e.prix||0),0);
+      if(prix<=0){showToast('Entre les prix des éléments');return;}
+    } else {
+      prix = parseFloat(document.getElementById('snack-prix-global').value);
+      if(isNaN(prix)||prix<0){showToast('Entre un prix pour ce snack');return;}
+    }
+    const sessionDesc = items.length ? items.map(e=>e.name+(e.qty>1?' ×'+e.qty:'')).join(', ') : 'Snack';
+    // If no items but global price, save as generic snack entry
+    if(!items.length) {
+      entries.push({id:Date.now(), date:entryDate, type:'Snack', desc:'Snack', prix, score:null});
+    } else {
+      items.forEach((ex,i) => {
+        const itemPrix = detailMode.snack ? (ex.prix||0) : (i===0 ? prix : 0);
+        entries.push({id:Date.now()+i, date:entryDate, type:ex.cat,
+          desc:ex.name+(ex.qty>1?' ×'+ex.qty:''),
+          prix: detailMode.snack ? (ex.prix||0) : (prix/items.length),
+          score:ex.score, qty:ex.qty, ml:ex.ml, hydra:ex.hydra,
+          isSnackSession:true, snackGroup:sessionDesc});
+      });
+    }
+    document.getElementById('snack-prix-global').value='';
+    document.getElementById('snack-date').value=getTodayStr();
+    showToast('✅ Snack enregistré !');
+  }
+
+  builderItems[mode]=[];
+  renderItemsList(mode);
+  updateBuilderTotal(mode);
+  save();
+}
+
+function renderItemsList(mode) {
+  const el = document.getElementById(mode+'-extras-list');
+  const items = builderItems[mode];
+  if(!items.length) {
+    el.innerHTML = `<div class="extras-empty">Aucun élément ajouté</div>`;
+    return;
+  }
+  el.innerHTML = items.map((e,i) => {
+    const sc = e.score; const scCls = scoreClass(sc);
+    return `<div class="extra-item">
+      <span class="extra-item-icon">${e.emoji}</span>
+      <span class="extra-item-name">${e.name}${e.qty>1?' ×'+e.qty:''}</span>
+      <span class="extra-item-score ${scCls}">${sc}/10</span>
+      <span class="extra-item-prix">${e.prix.toFixed(2)} CHF</span>
+      <button class="extra-item-del" onclick="removeItem('${mode}',${i})" aria-label="Supprimer">✕</button>
+    </div>`;
+  }).join('');
+  updateBuilderTotal(mode);
+}
+
+function removeItem(mode, idx) {
+  builderItems[mode].splice(idx,1);
+  renderItemsList(mode);
+  updateBuilderTotal(mode);
+}
+
+function previewItemFor(mode) {
+  const cat = document.getElementById(mode+'-extra-cat').value;
+  const box = document.getElementById(mode+'-extra-preview');
+  const info = CATALOGUE[cat];
+  if(!info){box.style.display='none';return;}
+  const s=info.score;
+  box.style.display='block';
+  box.innerHTML=`<strong>${cat}</strong> — Score : <strong style="color:${scoreColor(s)}">${s}/10</strong><br>${info.note}<br><span style="color:var(--text-muted)">~${info.cal} kcal · ${info.sucres}g sucres${info.ml?' · '+info.ml+'ml':''}</span>`;
+}
+
+// ── Delete ──
+function deleteEntry(id) {
+  entries = entries.filter(e => e.id !== id);
+  save();
+  renderHistory();
+  renderDashboard();
+  showToast('Entrée supprimée');
+}
+
+// ── Historique ──
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  const empty = document.getElementById('history-empty');
+  if(!entries.length) { list.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  const sorted = [...entries].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  list.innerHTML = sorted.map(e => {
+    const d = new Date(e.date);
+    const ds = d.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'short'}) + ' ' + d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    const sc = e.score != null ? `<span class="score-pill ${scoreClass(e.score)}">${e.score}/10</span>` : '';
+    const sub = e.linkedRepas
+      ? `<div style="font-size:10px;color:var(--text-muted);margin-top:1px">avec "${e.linkedRepas}"</div>`
+      : e.snackGroup && e.snackGroup !== e.desc
+        ? `<div style="font-size:10px;color:var(--text-muted);margin-top:1px">snack : ${e.snackGroup}</div>`
+        : '';
+    const typeBadge = e.type==='Repas'?'🍽️':e.type==='Boisson'?'💧':'🍫';
+    return `<div class="history-item">
+      <div class="h-icon">${typeBadge}</div>
+      <div class="h-main">
+        <div class="h-desc">${e.desc}</div>
+        <div class="h-meta">${ds}</div>
+        ${sub}
+      </div>
+      <div class="h-right">
+        <div class="h-prix">${e.prix.toFixed(2)} CHF</div>
+        ${sc}
+      </div>
+      <button class="del-btn" onclick="deleteEntry(${e.id})" aria-label="Supprimer">🗑️</button>
+    </div>`;
+  }).join('');
+}
+
+// ── Catalogue ──
+function renderCatalogue() {
+  ['grid-boissons','grid-snacks','grid-plats'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.innerHTML='';
+  });
+  // Sort all entries by score descending within each category
+  const sorted = Object.entries(CATALOGUE).sort((a,b) => b[1].score - a[1].score);
+  sorted.forEach(([name,info]) => {
+    const s = info.score;
+    const badge = info.isNew ? `<span class="new-badge">Nouveau</span>` : '';
+    const scoreLabel = s>=9?'Excellent':s>=7?'Très bon':s>=6?'Bon':s>=4?'Correct':'À limiter';
+    const html = `<div class="snack-card">
+      <div class="snack-name">${info.emoji} ${name}${badge}</div>
+      <div class="snack-meta">~${info.cal} kcal · ${info.sucres}g sucres</div>
+      <div class="snack-score-txt" style="color:${scoreColor(s)}">${s}/10 — ${scoreLabel}</div>
+      <div class="snack-note">${info.note}</div>
+    </div>`;
+    const gridId = info.cat==='Boisson'?'grid-boissons':info.cat==='Snack'?'grid-snacks':'grid-plats';
+    const el = document.getElementById(gridId);
+    if(el) el.innerHTML += html;
+  });
+}
+
+// ── Hydration helpers ──
+const HYDRA_GOAL = 2000; // ml/jour
+function getHydraForDay(dateStr) {
+  return entries
+    .filter(e => e.type==='Boisson' && new Date(e.date).toDateString()===dateStr)
+    .reduce((sum, e) => {
+      const info = CATALOGUE[e.desc.split(' ×')[0]];
+      if(!info || !info.ml) return sum;
+      const qty = e.qty || 1;
+      return sum + info.ml * qty;
+    }, 0);
+}
+
+function renderHydration(now) {
+  const todayStr = now.toDateString();
+  const todayMl = getHydraForDay(todayStr);
+  const pct = Math.min(100, Math.round(todayMl / HYDRA_GOAL * 100));
+
+  // color: red < 50%, amber 50-80%, green >= 80%
+  const fillColor = pct>=80?'#1baf7a':pct>=50?'#eda100':'#e34948';
+  const badgeCls  = pct>=80?'badge-good':pct>=50?'badge-avg':'badge-bad';
+  const badgeTxt  = pct>=100?'🎯 Objectif atteint !':pct>=80?'💧 Bien hydraté':pct>=50?'⚠️ Peut mieux faire':'🔴 Hydratation insuffisante';
+
+  document.getElementById('hydra-ml').innerHTML = todayMl+' <span>ml</span>';
+  document.getElementById('hydra-pct').textContent = pct+'% de l\'objectif atteint';
+  document.getElementById('hydra-fill').style.width = pct+'%';
+  document.getElementById('hydra-fill').style.background = fillColor;
+  const bdg = document.getElementById('hydra-badge');
+  bdg.className = 'hydra-badge '+badgeCls;
+  bdg.textContent = badgeTxt;
+
+  // Detail drops today
+  const todayDrinks = entries.filter(e=>e.type==='Boisson' && new Date(e.date).toDateString()===todayStr);
+  const dropsEl = document.getElementById('hydra-drops');
+  if(todayDrinks.length) {
+    dropsEl.innerHTML = todayDrinks.map(e => {
+      const name = e.desc.split(' ×')[0];
+      const info = CATALOGUE[name];
+      const ml = info ? info.ml*(e.qty||1) : 0;
+      return `<div class="drop-item">${info?info.emoji:'💧'} ${e.desc} <strong style="color:${info&&info.hydra?'#2a78d6':'#898781'}">${ml>0?'+'+ml+' ml':'—'}</strong></div>`;
+    }).join('');
+  } else {
+    dropsEl.innerHTML = '<span style="font-size:12px;color:var(--text-muted)">Aucune boisson enregistrée aujourd\'hui</span>';
+  }
+
+  // 7-day average
+  let totalMl = 0, daysWithData = 0;
+  const hydraLabels=[], hydraData=[];
+  for(let i=6;i>=0;i--) {
+    const d = new Date(now - i*864e5);
+    const ml = getHydraForDay(d.toDateString());
+    hydraLabels.push(d.toLocaleDateString('fr-FR',{weekday:'short'}));
+    hydraData.push(ml);
+    if(ml>0){totalMl+=ml; daysWithData++;}
+  }
+  const avgMl = daysWithData ? Math.round(totalMl/daysWithData) : 0;
+  document.getElementById('hydra-avg').textContent = avgMl>0 ? avgMl+' ml/jour' : '— ml/jour';
+
+  // sparkline chart
+  const isDark = matchMedia('(prefers-color-scheme:dark)').matches;
+  const gridColor = isDark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.06)';
+  const tickColor = isDark?'#6b6a66':'#898781';
+  if(window.chartHydra) window.chartHydra.destroy();
+  window.chartHydra = new Chart(document.getElementById('chart-hydra'), {
+    type:'bar',
+    data:{labels:hydraLabels, datasets:[
+      {data:hydraData, backgroundColor: hydraData.map(v=>v>=HYDRA_GOAL?'#1baf7a':v>=HYDRA_GOAL*0.5?'#eda100':'#e34948'), borderRadius:4, borderSkipped:false},
+      {type:'line', data:Array(7).fill(HYDRA_GOAL), borderColor:'rgba(42,120,214,0.4)', borderWidth:1.5, borderDash:[4,4], pointRadius:0, fill:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>v.raw+' ml'}}},
+      scales:{
+        y:{beginAtZero:true,ticks:{callback:v=>v>=1000?(v/1000).toFixed(1)+'L':v+'ml',font:{size:10},color:tickColor},grid:{color:gridColor},border:{display:false}},
+        x:{ticks:{font:{size:10},color:tickColor},grid:{display:false},border:{display:false}}
+      }
+    }
+  });
+}
+
+// ── Charts ──
+let chartDep, chartSante, chartRep;
+
+function renderDashboard() {
+  const now = new Date();
+  const todayStr = now.toDateString();
+  const weekAgo = new Date(now - 7*864e5);
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const toDay   = entries.filter(e=>new Date(e.date).toDateString()===todayStr).reduce((s,e)=>s+e.prix,0);
+  const toWeek  = entries.filter(e=>new Date(e.date)>=weekAgo).reduce((s,e)=>s+e.prix,0);
+  const toMonth = entries.filter(e=>new Date(e.date)>=monthStart).reduce((s,e)=>s+e.prix,0);
+
+  const avg = arr => arr.length ? arr.reduce((s,e)=>s+e.score,0)/arr.length : null;
+
+  const todayFood  = entries.filter(e=>new Date(e.date).toDateString()===todayStr&&isFood(e) &&e.score!=null);
+  const todayDrink = entries.filter(e=>new Date(e.date).toDateString()===todayStr&&isDrink(e)&&e.score!=null);
+  const sfood = avg(todayFood); const sdrink = avg(todayDrink);
+  const savg  = sfood!=null&&sdrink!=null ? (sfood+sdrink)/2 : sfood??sdrink;
+
+  const setScoreEl = (valId, lblId, val) => {
+    const el=document.getElementById(valId), lb=document.getElementById(lblId);
+    if(val!=null){el.textContent=val.toFixed(1)+'/10';el.style.color=scoreColor(val);lb.textContent=val>=7?'Excellent':val>=6?'Bon':val>=4?'Correct':'À améliorer';}
+    else{el.textContent='—';el.style.color='var(--text-muted)';lb.textContent='—';}
+  };
+  setScoreEl('score-food-today','score-food-label',sfood);
+  setScoreEl('score-drink-today','score-drink-label',sdrink);
+  setScoreEl('score-avg-today','score-avg-label',savg);
+
+  document.getElementById('kpi-today').textContent  = toDay.toFixed(2)+' CHF';
+  document.getElementById('kpi-week').textContent   = toWeek.toFixed(2)+' CHF';
+  document.getElementById('kpi-month').textContent  = toMonth.toFixed(2)+' CHF';
+  document.getElementById('kpi-score').textContent  = savg!=null ? savg.toFixed(1)+'/10' : '—';
+
+  const isDark = matchMedia('(prefers-color-scheme:dark)').matches;
+  const gridColor = isDark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.06)';
+  const tickColor = isDark?'#6b6a66':'#898781';
+
+  const labels=[]; const depRepas=[],depSnacks=[],scFood=[],scDrink=[],scAvg=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date(now-i*864e5); const ds=d.toDateString();
+    labels.push(d.toLocaleDateString('fr-FR',{weekday:'short'}));
+    const dayE=entries.filter(e=>new Date(e.date).toDateString()===ds);
+    depRepas.push(parseFloat(dayE.filter(e=>e.type==='Repas'||e.linkedRepas).reduce((s,e)=>s+e.prix,0).toFixed(2)));
+    depSnacks.push(parseFloat(dayE.filter(e=>(e.type==='Snack'||e.type==='Boisson')&&!e.linkedRepas).reduce((s,e)=>s+e.prix,0).toFixed(2)));
+    const df=dayE.filter(e=>isFood(e)&&e.score!=null); const dd=dayE.filter(e=>isDrink(e)&&e.score!=null);
+    const sf=df.length?parseFloat((df.reduce((s,e)=>s+e.score,0)/df.length).toFixed(1)):null;
+    const sd=dd.length?parseFloat((dd.reduce((s,e)=>s+e.score,0)/dd.length).toFixed(1)):null;
+    scFood.push(sf); scDrink.push(sd);
+    scAvg.push(sf!=null&&sd!=null?parseFloat(((sf+sd)/2).toFixed(1)):sf??sd??null);
+  }
+
+  if(chartDep) chartDep.destroy();
+  chartDep = new Chart(document.getElementById('chart-depenses'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Repas',data:depRepas,backgroundColor:'#2a78d6',borderRadius:4,borderSkipped:false,stack:'a'},
+      {label:'Snacks',data:depSnacks,backgroundColor:'#eda100',borderRadius:4,borderSkipped:false,stack:'a'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>v.dataset.label+' : '+v.raw.toFixed(2)+' CHF'}}},
+      scales:{y:{beginAtZero:true,stacked:true,ticks:{callback:v=>v+' CHF',font:{size:10},color:tickColor},grid:{color:gridColor},border:{display:false}},x:{stacked:true,ticks:{font:{size:10},color:tickColor},grid:{display:false},border:{display:false}}}
+    }
+  });
+
+  if(chartSante) chartSante.destroy();
+  chartSante = new Chart(document.getElementById('chart-sante'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Nourriture',data:scFood, borderColor:'#2a78d6',backgroundColor:'rgba(42,120,214,.07)',borderWidth:2.5,tension:.4,pointRadius:4,pointBackgroundColor:'#2a78d6',pointBorderColor:'#fff',pointBorderWidth:2,spanGaps:true},
+      {label:'Boissons',  data:scDrink,borderColor:'#1baf7a',backgroundColor:'rgba(27,175,122,.07)',borderWidth:2.5,tension:.4,pointRadius:4,pointBackgroundColor:'#1baf7a',pointBorderColor:'#fff',pointBorderWidth:2,spanGaps:true},
+      {label:'Moyenne',   data:scAvg, borderColor:'#898781',backgroundColor:'transparent',borderWidth:1.5,borderDash:[5,4],tension:.4,pointRadius:3,pointBackgroundColor:'#898781',spanGaps:true}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>v.dataset.label+' : '+(v.raw!=null?v.raw+'/10':'—')}}},
+      scales:{y:{min:0,max:10,ticks:{font:{size:10},color:tickColor},grid:{color:gridColor},border:{display:false}},x:{ticks:{font:{size:10},color:tickColor},grid:{display:false},border:{display:false}}}
+    }
+  });
+
+  const repT=entries.filter(e=>e.type==='Repas').reduce((s,e)=>s+e.prix,0);
+  const snT =entries.filter(e=>e.type==='Snack').reduce((s,e)=>s+e.prix,0);
+  const boT =entries.filter(e=>e.type==='Boisson').reduce((s,e)=>s+e.prix,0);
+  const tot =repT+snT+boT||1;
+
+  if(chartRep) chartRep.destroy();
+  chartRep = new Chart(document.getElementById('chart-repartition'),{
+    type:'doughnut',
+    data:{labels:['Repas','Snacks','Boissons'],datasets:[{data:[repT,snT,boT],backgroundColor:['#2a78d6','#eda100','#1baf7a'],borderWidth:3,borderColor:isDark?'#1c1c1a':'#ffffff'}]},
+    options:{responsive:false,plugins:{legend:{display:false}},cutout:'62%'}
+  });
+  document.getElementById('donut-legend').innerHTML=[
+    ['Repas','#2a78d6',repT],['Snacks','#eda100',snT],['Boissons','#1baf7a',boT]
+  ].map(([l,c,v])=>`<div><span class="legend-dot" style="background:${c}"></span>${l} — ${v.toFixed(2)} CHF (${Math.round(v/tot*100)}%)</div>`).join('');
+
+  // Gauge uses its own period (gaugeDays)
+  const cutoffG = gaugeDays===0 ? new Date(0) : new Date(now - gaugeDays*864e5);
+  const filteredG = entries.filter(e=>new Date(e.date)>=cutoffG);
+  const gFoodArr  = filteredG.filter(e=>isFood(e) &&e.score!=null);
+  const gDrinkArr = filteredG.filter(e=>isDrink(e)&&e.score!=null);
+  const gSF = gFoodArr.length  ? gFoodArr.reduce((s,e)=>s+e.score,0)/gFoodArr.length   : null;
+  const gSD = gDrinkArr.length ? gDrinkArr.reduce((s,e)=>s+e.score,0)/gDrinkArr.length : null;
+  const gSA = gSF!=null&&gSD!=null?(gSF+gSD)/2 : gSF??gSD;
+  drawGauge(gSA, gSF, gSD, filteredG.length);
+  renderHydration(now);
+}
+
+let gaugeDays = 7; // current period
+
+function setGaugePeriod(days, btn) {
+  gaugeDays = days;
+  document.querySelectorAll('.gauge-period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const now = new Date();
+  const cutoff = days === 0 ? new Date(0) : new Date(now - days*864e5);
+  const filtered = entries.filter(e => new Date(e.date) >= cutoff);
+  const foodArr  = filtered.filter(e=>isFood(e) &&e.score!=null);
+  const drinkArr = filtered.filter(e=>isDrink(e)&&e.score!=null);
+  const sf = foodArr.length  ? foodArr.reduce((s,e)=>s+e.score,0)/foodArr.length   : null;
+  const sd = drinkArr.length ? drinkArr.reduce((s,e)=>s+e.score,0)/drinkArr.length : null;
+  const sa = sf!=null&&sd!=null?(sf+sd)/2 : sf??sd;
+  const periodLabel = days===0?'Sur toute la période':days===7?'Sur les 7 derniers jours':days===30?'Sur les 30 derniers jours':days===90?'Sur les 3 derniers mois':'Sur les 6 derniers mois';
+  document.getElementById('gauge-period-label').textContent = periodLabel;
+  drawGauge(sa, sf, sd, filtered.length);
+}
+
+function drawGauge(score, sfood, sdrink, count) {
+  const c = document.getElementById('chart-gauge');
+  const ctx = c.getContext('2d');
+  const W=280, H=148, cx=140, cy=138, r=110;
+  ctx.clearRect(0,0,W,H);
+  const isDark = matchMedia('(prefers-color-scheme:dark)').matches;
+  ctx.beginPath();
+  ctx.arc(cx,cy,r,Math.PI,2*Math.PI);
+  ctx.strokeStyle = isDark?'#2c2c2a':'#e5e4e0';
+  ctx.lineWidth=20; ctx.lineCap='round'; ctx.stroke();
+  if(score!=null) {
+    const g = ctx.createLinearGradient(cx-r,cy,cx+r,cy);
+    g.addColorStop(0,'#e34948'); g.addColorStop(0.45,'#eda100'); g.addColorStop(1,'#1baf7a');
+    ctx.beginPath();
+    ctx.arc(cx,cy,r,Math.PI,Math.PI+score/10*Math.PI);
+    ctx.strokeStyle=g; ctx.lineWidth=20; ctx.lineCap='round'; ctx.stroke();
+  }
+  const val = document.getElementById('gauge-val');
+  const bdg = document.getElementById('gauge-badge');
+  if(score!=null) {
+    val.textContent = score.toFixed(1)+'/10'; val.style.color = scoreColor(score);
+    bdg.className = 'score-badge '+badgeClass(score); bdg.textContent = badgeLabel(score);
+  } else {
+    val.textContent='—'; val.style.color='var(--text-muted)';
+    bdg.className='score-badge badge-avg'; bdg.textContent='En attente de données';
+  }
+  // breakdown
+  const fEl = document.getElementById('gauge-food-val');
+  const dEl = document.getElementById('gauge-drink-val');
+  const cEl = document.getElementById('gauge-count-val');
+  if(sfood!=null){fEl.textContent=sfood.toFixed(1)+'/10';fEl.style.color=scoreColor(sfood);}else{fEl.textContent='—';fEl.style.color='var(--text-muted)';}
+  if(sdrink!=null){dEl.textContent=sdrink.toFixed(1)+'/10';dEl.style.color=scoreColor(sdrink);}else{dEl.textContent='—';dEl.style.color='var(--text-muted)';}
+  cEl.textContent = (count??0)+' entrée'+(count!==1?'s':'');
+}
+
+// ── Init ──
+function getTodayStr() {
+  const n = new Date();
+  return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');
+}
+document.getElementById('repas-date').value = getTodayStr();
+document.getElementById('snack-date').value = getTodayStr();
+renderItemsList('repas');
+renderItemsList('snack');
+renderDashboard();
+renderCatalogue();
+</script>
+</body>
+</html>
