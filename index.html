@@ -291,6 +291,61 @@
   }
   .del-btn:active { background: var(--red-light); color: var(--red); }
 
+  /* ── Grouped history ── */
+  .session-block {
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .session-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 12px; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .session-header:active { background: var(--surface-2); }
+  .session-icon { font-size: 20px; flex-shrink: 0; }
+  .session-main { flex: 1; min-width: 0; }
+  .session-title { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .session-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .session-right { text-align: right; flex-shrink: 0; }
+  .session-prix { font-size: 14px; font-weight: 700; color: var(--text); }
+  .session-chevron { font-size: 12px; color: var(--text-muted); flex-shrink: 0; transition: transform .2s; }
+  .session-chevron.open { transform: rotate(180deg); }
+  .session-items { display: none; border-top: 0.5px solid var(--border); }
+  .session-items.open { display: block; }
+  .session-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 12px; border-bottom: 0.5px solid var(--border);
+    background: var(--surface-2);
+  }
+  .session-item:last-child { border-bottom: none; }
+  .si-icon { font-size: 15px; flex-shrink: 0; }
+  .si-main { flex: 1; min-width: 0; }
+  .si-desc { font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .si-prix { font-size: 12px; color: var(--text-muted); }
+  .session-actions {
+    display: flex; gap: 6px; padding: 9px 12px;
+    border-top: 0.5px solid var(--border); background: var(--surface-2);
+  }
+  .btn-del-session {
+    flex: 1; padding: 8px; border-radius: var(--radius);
+    border: 0.5px solid var(--border-danger, #e34948);
+    background: var(--red-light); color: var(--red-text);
+    font-size: 12px; font-weight: 600; font-family: inherit;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-del-session:active { opacity: 0.7; }
+  .del-item-btn {
+    background: none; border: none; color: var(--text-muted);
+    cursor: pointer; padding: 4px 6px; border-radius: 6px; font-size: 14px;
+    flex-shrink: 0; -webkit-tap-highlight-color: transparent;
+  }
+  .del-item-btn:active { background: var(--red-light); color: var(--red); }
+
   .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); font-size: 14px; }
   .empty-icon { font-size: 40px; margin-bottom: .75rem; }
   .section-head { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin: .75rem 0 .5rem; }
@@ -417,6 +472,18 @@
   .hydra-avg-label { font-size: 12px; color: var(--text-muted); }
   .hydra-avg-val { font-size: 13px; font-weight: 600; color: var(--text); }
   .hydra-chart-wrap { position: relative; height: 100px; margin-top: .75rem; }
+
+  .btn-data {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 10px; border-radius: var(--radius);
+    border: 0.5px solid var(--border-strong);
+    background: var(--surface-2); color: var(--text);
+    font-size: 13px; font-weight: 600; font-family: inherit;
+    cursor: pointer; transition: opacity .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-data:active { opacity: 0.7; }
+  .btn-data-import { color: var(--green); border-color: var(--green); }
 
   /* ── Toast ── */
   .toast {
@@ -783,6 +850,29 @@
 
     <!-- ══ HISTORIQUE ══ -->
     <div id="page-historique" class="page">
+
+      <!-- Export / Import -->
+      <div class="card" style="margin-bottom:.9rem">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Données
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button class="btn-data" onclick="exportData()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exporter
+          </button>
+          <button class="btn-data btn-data-import" onclick="document.getElementById('import-file').click()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Importer
+          </button>
+          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:.6rem;line-height:1.5">
+          L'export sauvegarde toutes tes entrées en fichier JSON. L'import fusionne les données importées avec les existantes.
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-title">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z" opacity="0"/><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
@@ -887,6 +977,8 @@ function showPage(id, btn) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   if(btn) btn.classList.add('active');
+  // Reset scroll to top on every page change
+  document.querySelector('.pages').scrollTop = 0;
   if(id==='dashboard') renderDashboard();
   if(id==='historique') renderHistory();
   if(id==='catalogue') renderCatalogue();
@@ -1007,12 +1099,13 @@ function saveSession(mode) {
       prix = parseFloat(document.getElementById('repas-prix').value);
       if(isNaN(prix)||prix<0){showToast('Entre un prix pour ce repas');return;}
     }
-    entries.push({id:Date.now(), date:entryDate, type:'Repas', desc, prix, score});
+    const sessionId = Date.now();
+    entries.push({id:sessionId, date:entryDate, type:'Repas', desc, prix, score, sessionId});
     items.forEach((ex,i) => {
-      entries.push({id:Date.now()+i+1, date:entryDate, type:ex.cat,
+      entries.push({id:sessionId+i+1, date:entryDate, type:ex.cat,
         desc:ex.name+(ex.qty>1?' ×'+ex.qty:''),
         prix: detailMode.repas ? (ex.prix||0) : 0,
-        score:ex.score, qty:ex.qty, ml:ex.ml, hydra:ex.hydra, linkedRepas:desc});
+        score:ex.score, qty:ex.qty, ml:ex.ml, hydra:ex.hydra, linkedRepas:desc, sessionId});
     });
     document.getElementById('repas-desc').value='';
     document.getElementById('repas-prix').value='';
@@ -1034,17 +1127,16 @@ function saveSession(mode) {
       if(isNaN(prix)||prix<0){showToast('Entre un prix pour ce snack');return;}
     }
     const sessionDesc = items.length ? items.map(e=>e.name+(e.qty>1?' ×'+e.qty:'')).join(', ') : 'Snack';
-    // If no items but global price, save as generic snack entry
+    const snackSessionId = Date.now();
     if(!items.length) {
-      entries.push({id:Date.now(), date:entryDate, type:'Snack', desc:'Snack', prix, score:null});
+      entries.push({id:snackSessionId, date:entryDate, type:'Snack', desc:'Snack', prix, score:null, sessionId:snackSessionId});
     } else {
       items.forEach((ex,i) => {
-        const itemPrix = detailMode.snack ? (ex.prix||0) : (i===0 ? prix : 0);
-        entries.push({id:Date.now()+i, date:entryDate, type:ex.cat,
+        entries.push({id:snackSessionId+i, date:entryDate, type:ex.cat,
           desc:ex.name+(ex.qty>1?' ×'+ex.qty:''),
           prix: detailMode.snack ? (ex.prix||0) : (prix/items.length),
           score:ex.score, qty:ex.qty, ml:ex.ml, hydra:ex.hydra,
-          isSnackSession:true, snackGroup:sessionDesc});
+          isSnackSession:true, snackGroup:sessionDesc, sessionId:snackSessionId});
       });
     }
     document.getElementById('snack-prix-global').value='';
@@ -1094,6 +1186,50 @@ function previewItemFor(mode) {
   box.innerHTML=`<strong>${cat}</strong> — Score : <strong style="color:${scoreColor(s)}">${s}/10</strong><br>${info.note}<br><span style="color:var(--text-muted)">~${info.cal} kcal · ${info.sucres}g sucres${info.ml?' · '+info.ml+'ml':''}</span>`;
 }
 
+// ── Export / Import ──
+function exportData() {
+  const data = {
+    version: 2,
+    exportDate: new Date().toISOString(),
+    entries: entries
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const dateStr = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `alitrack-export-${dateStr}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✅ Export téléchargé !');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      const imported = data.entries || data; // support both formats
+      if(!Array.isArray(imported)) throw new Error('Format invalide');
+      // Merge: add only entries whose id doesn't already exist
+      const existingIds = new Set(entries.map(e=>e.id));
+      const newEntries = imported.filter(e=>!existingIds.has(e.id));
+      entries = [...entries, ...newEntries];
+      save();
+      renderHistory();
+      renderDashboard();
+      showToast(`✅ ${newEntries.length} entrée(s) importée(s) !`);
+    } catch(err) {
+      showToast('❌ Fichier invalide');
+    }
+    // Reset file input so same file can be reimported if needed
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
 // ── Delete ──
 function deleteEntry(id) {
   entries = entries.filter(e => e.id !== id);
@@ -1104,34 +1240,92 @@ function deleteEntry(id) {
 }
 
 // ── Historique ──
+function toggleSession(sid) {
+  const items = document.getElementById('si-'+sid);
+  const chev  = document.getElementById('chev-'+sid);
+  if(!items) return;
+  items.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+
+function deleteSession(sid) {
+  if(!confirm('Supprimer ce repas/snack et tous ses éléments ?')) return;
+  entries = entries.filter(e => e.sessionId !== sid && e.id !== sid);
+  save(); renderHistory(); renderDashboard();
+  showToast('Supprimé');
+}
+
+function deleteItem(id) {
+  entries = entries.filter(e => e.id !== id);
+  save(); renderHistory(); renderDashboard();
+  showToast('Élément supprimé');
+}
+
 function renderHistory() {
-  const list = document.getElementById('history-list');
+  const list  = document.getElementById('history-list');
   const empty = document.getElementById('history-empty');
   if(!entries.length) { list.innerHTML=''; empty.style.display='block'; return; }
   empty.style.display='none';
-  const sorted = [...entries].sort((a,b)=>new Date(b.date)-new Date(a.date));
-  list.innerHTML = sorted.map(e => {
-    const d = new Date(e.date);
-    const ds = d.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'short'}) + ' ' + d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-    const sc = e.score != null ? `<span class="score-pill ${scoreClass(e.score)}">${e.score}/10</span>` : '';
-    const sub = e.linkedRepas
-      ? `<div style="font-size:10px;color:var(--text-muted);margin-top:1px">avec "${e.linkedRepas}"</div>`
-      : e.snackGroup && e.snackGroup !== e.desc
-        ? `<div style="font-size:10px;color:var(--text-muted);margin-top:1px">snack : ${e.snackGroup}</div>`
-        : '';
-    const typeBadge = e.type==='Repas'?'🍽️':e.type==='Boisson'?'💧':'🍫';
-    return `<div class="history-item">
-      <div class="h-icon">${typeBadge}</div>
-      <div class="h-main">
-        <div class="h-desc">${e.desc}</div>
-        <div class="h-meta">${ds}</div>
-        ${sub}
+
+  // Group entries by sessionId (or by id if no sessionId = legacy)
+  const groups = new Map();
+  [...entries].sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(e => {
+    const gid = e.sessionId ?? e.id;
+    if(!groups.has(gid)) groups.set(gid, []);
+    groups.get(gid).push(e);
+  });
+
+  list.innerHTML = [...groups.values()].map(group => {
+    // Sort: repas first, then items
+    group.sort((a,b) => (b.type==='Repas'?1:0)-(a.type==='Repas'?1:0));
+    const leader = group.find(e=>e.type==='Repas') || group[0];
+    const gid = leader.sessionId ?? leader.id;
+    const d = new Date(leader.date);
+    const ds = d.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'short'});
+    const ts = d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    const totalPrix = group.reduce((s,e)=>s+(e.prix||0),0);
+    const icon = leader.type==='Repas'?'🍽️':leader.isSnackSession?'🍫':'🍫';
+    const sc = leader.score!=null ? `<span class="score-pill ${scoreClass(leader.score)}" style="margin-top:3px">${leader.score}/10</span>` : '';
+    const hasItems = group.length > 1;
+    const chevron = hasItems ? `<span class="session-chevron" id="chev-${gid}">▼</span>` : '';
+
+    // Sub-items (all except leader if multiple)
+    const subItems = hasItems ? group.filter(e=>e!==leader).map(e => {
+      const sic = e.score!=null ? `<span class="score-pill ${scoreClass(e.score)}" style="font-size:10px;padding:1px 6px">${e.score}/10</span>` : '';
+      const em = e.type==='Boisson'?'💧':e.type==='Snack'?'🍫':'🍽️';
+      return `<div class="session-item">
+        <span class="si-icon">${em}</span>
+        <div class="si-main">
+          <div class="si-desc">${e.desc}</div>
+          ${sic}
+        </div>
+        ${e.prix>0?`<span class="si-prix">${e.prix.toFixed(2)} CHF</span>`:''}
+        <button class="del-item-btn" onclick="deleteItem(${e.id})" aria-label="Supprimer">🗑️</button>
+      </div>`;
+    }).join('') : '';
+
+    const itemsBlock = hasItems ? `
+      <div class="session-items" id="si-${gid}">
+        ${subItems}
+        <div class="session-actions">
+          <button class="btn-del-session" onclick="deleteSession(${gid})">🗑️ Supprimer ce repas</button>
+        </div>
+      </div>` : '';
+
+    return `<div class="session-block">
+      <div class="session-header" onclick="${hasItems?`toggleSession(${gid})`:`deleteSession(${gid})`}" ${!hasItems?'style="cursor:default"':''}>
+        <span class="session-icon">${icon}</span>
+        <div class="session-main">
+          <div class="session-title">${leader.desc}</div>
+          <div class="session-meta">${ds} · ${ts}${group.length>1?' · '+group.length+' éléments':''}</div>
+        </div>
+        <div class="session-right">
+          <div class="session-prix">${totalPrix>0?totalPrix.toFixed(2)+' CHF':''}</div>
+          ${sc}
+        </div>
+        ${chevron}
       </div>
-      <div class="h-right">
-        <div class="h-prix">${e.prix.toFixed(2)} CHF</div>
-        ${sc}
-      </div>
-      <button class="del-btn" onclick="deleteEntry(${e.id})" aria-label="Supprimer">🗑️</button>
+      ${hasItems ? itemsBlock : `<div class="session-actions"><button class="btn-del-session" onclick="deleteSession(${gid})">🗑️ Supprimer</button></div>`}
     </div>`;
   }).join('');
 }
