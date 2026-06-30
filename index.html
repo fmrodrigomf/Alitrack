@@ -7,6 +7,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="AliTrack">
 <meta name="theme-color" content="#1baf7a">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231baf7a'/%3E%3Ccircle cx='50' cy='44' r='22' fill='none' stroke='white' stroke-width='6'/%3E%3Cpath d='M50 44 L50 26' stroke='white' stroke-width='6' stroke-linecap='round'/%3E%3Cpath d='M38 78 Q50 86 62 78' fill='none' stroke='white' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231baf7a'/%3E%3Ccircle cx='50' cy='44' r='22' fill='none' stroke='white' stroke-width='6'/%3E%3Cpath d='M50 44 L50 26' stroke='white' stroke-width='6' stroke-linecap='round'/%3E%3Cpath d='M38 78 Q50 86 62 78' fill='none' stroke='white' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
 <title>AliTrack</title>
 <style>
   :root {
@@ -249,6 +251,39 @@
     background: var(--surface-2); border-radius: var(--radius);
     border: 0.5px solid var(--border); padding: .8rem .9rem;
   }
+  .del-product-btn {
+    position: absolute; top: 6px; right: 6px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--surface); border: 0.5px solid var(--border-strong);
+    color: var(--text-muted); font-size: 11px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .del-product-btn:active { background: var(--red-light); color: var(--red); border-color: var(--red); }
+
+  /* ── Confirm modal ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    display: none; align-items: center; justify-content: center;
+    z-index: 200; padding: 1.5rem;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: var(--surface); border-radius: 16px;
+    padding: 1.4rem 1.3rem; max-width: 340px; width: 100%;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  }
+  .modal-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: .5rem; }
+  .modal-text { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1.2rem; }
+  .modal-actions { display: flex; gap: 8px; }
+  .modal-btn {
+    flex: 1; padding: 10px; border-radius: 10px; border: none;
+    font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .modal-btn-cancel { background: var(--surface-2); color: var(--text); border: 0.5px solid var(--border-strong); }
+  .modal-btn-confirm { background: var(--red); color: #fff; }
+  .modal-btn:active { opacity: .8; }
   .snack-name { font-size: 13px; font-weight: 600; color: var(--text); }
   .snack-meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
   .snack-score-txt { font-size: 12px; font-weight: 600; margin-top: 6px; }
@@ -397,6 +432,67 @@
   .detail-toggle-amber { border-color: var(--amber); color: var(--amber); }
   .detail-toggle-amber.on { background: var(--amber); color: #fff; }
 
+  .company-check {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: .9rem; padding: .7rem .85rem;
+    background: var(--surface-2); border: 0.5px solid var(--border);
+    border-radius: var(--radius); cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .company-check input[type=checkbox] { display: none; }
+  .company-check-box {
+    width: 20px; height: 20px; border-radius: 6px;
+    border: 1.5px solid var(--border-strong); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s;
+  }
+  .company-check input:checked + .company-check-box {
+    background: #2a78d6; border-color: #2a78d6;
+  }
+  .company-check input:checked + .company-check-box::after {
+    content: '✓'; color: #fff; font-size: 13px; font-weight: 700;
+  }
+  .company-check-label { font-size: 13px; color: var(--text); line-height: 1.4; }
+
+  /* ── Category tabs + product grid (point 4) ── */
+  .cat-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+  .cat-tab {
+    padding: 7px 4px; border-radius: 8px; border: 0.5px solid var(--border-strong);
+    background: var(--surface-2); color: var(--text-muted);
+    font-size: 11px; font-weight: 600; font-family: inherit; cursor: pointer;
+    transition: all .15s; -webkit-tap-highlight-color: transparent;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .cat-tab.active { background: var(--green); color: #fff; border-color: var(--green); }
+  .cat-tab:active { opacity: .75; }
+  .product-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 6px; max-height: 220px; overflow-y: auto; padding: 2px;
+  }
+  .product-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 8px 6px; border-radius: 10px; border: 1.5px solid var(--border);
+    background: var(--surface-2); color: var(--text); cursor: pointer;
+    font-family: inherit; transition: all .15s; -webkit-tap-highlight-color: transparent;
+    text-align: center;
+  }
+  .product-btn.selected { border-color: var(--green); background: var(--green-light); }
+  .product-btn:active { opacity: .8; }
+  .product-btn-emoji { font-size: 19px; line-height: 1; }
+  .product-btn-name { font-size: 10.5px; font-weight: 600; line-height: 1.25; }
+  .product-btn-score { font-size: 9.5px; font-weight: 700; margin-top: 1px; }
+
+  /* ── ML preset pills (boisson volume) ── */
+  .ml-pill-row { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ml-pill {
+    padding: 5px 10px; border-radius: 14px; border: 0.5px solid var(--border-strong);
+    background: var(--surface-2); color: var(--text-secondary);
+    font-size: 11px; font-weight: 600; font-family: inherit; cursor: pointer;
+    transition: all .15s; -webkit-tap-highlight-color: transparent;
+  }
+  .ml-pill.selected { background: var(--green); color: #fff; border-color: var(--green); }
+  .ml-pill:active { opacity: .75; }
+
   /* ── Extras builder ── */
   .extra-item {
     display: flex; align-items: center; gap: 8px;
@@ -435,6 +531,17 @@
     min-width: 48px; text-align: center; font-size: 15px; font-weight: 700;
     padding: 4px 8px; border-radius: 8px; transition: color .15s;
   }
+
+  /* ── Chart period pills ── */
+  .chart-period-row { display:flex; gap:4px; margin-bottom:.7rem; }
+  .cp-btn {
+    padding:4px 9px; border-radius:6px; border:0.5px solid var(--border-strong);
+    background:var(--surface-2); color:var(--text-muted);
+    font-size:11px; font-weight:600; font-family:inherit; cursor:pointer;
+    transition:all .15s; -webkit-tap-highlight-color:transparent;
+  }
+  .cp-btn.active { background:var(--text); color:var(--bg); border-color:var(--text); }
+  .cp-btn:active { opacity:.7; }
 
   /* ── Gauge period selector ── */
   .gauge-period-row { display: flex; gap: 5px; margin-bottom: 6px; flex-wrap: wrap; }
@@ -517,13 +624,20 @@
         <div class="kpi"><div class="kpi-label">Cette semaine</div><div class="kpi-val" id="kpi-week">0.00 CHF</div></div>
         <div class="kpi"><div class="kpi-label">Ce mois</div><div class="kpi-val" id="kpi-month">0.00 CHF</div></div>
         <div class="kpi"><div class="kpi-label">Score global</div><div class="kpi-val green" id="kpi-score">—</div></div>
+        <div class="kpi" style="grid-column:1/-1"><div class="kpi-label">🏢 Remboursé entreprise (ce mois)</div><div class="kpi-val" id="kpi-company" style="color:#2a78d6">0.00 CHF</div></div>
       </div>
 
       <!-- Scores nourriture vs boissons -->
       <div class="card" style="margin-bottom:.9rem">
         <div class="card-title">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          Qualité nutritionnelle — aujourd'hui
+          Qualité nutritionnelle
+        </div>
+        <div class="chart-period-row">
+          <button class="cp-btn" onclick="setChartPeriod('sante',3,this)">3 j</button>
+          <button class="cp-btn active" onclick="setChartPeriod('sante',7,this)">7 j</button>
+          <button class="cp-btn" onclick="setChartPeriod('sante',30,this)">30 j</button>
+          <button class="cp-btn" onclick="setChartPeriod('sante',0,this)">Tout</button>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:.9rem">
           <div style="text-align:center">
@@ -542,32 +656,42 @@
             <div style="font-size:10px;color:var(--text-muted)" id="score-avg-label">—</div>
           </div>
         </div>
-        <!-- 7-day dual line chart -->
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Évolution sur 7 jours</div>
         <div style="display:flex;gap:12px;margin-bottom:6px;font-size:11px">
           <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#2a78d6;margin-right:4px"></span>Nourriture</span>
           <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#1baf7a;margin-right:4px"></span>Boissons</span>
           <span><span style="display:inline-block;width:10px;height:2px;background:#898781;margin-right:4px;vertical-align:middle"></span>Moyenne</span>
         </div>
-        <div class="chart-wrap"><canvas id="chart-sante" role="img" aria-label="Évolution du score santé nourriture et boissons"></canvas></div>
+        <div class="chart-wrap"><canvas id="chart-sante" role="img" aria-label="Évolution du score santé"></canvas></div>
       </div>
 
       <div class="card" style="margin-bottom:.9rem">
         <div class="card-title">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="4" height="18" rx="1"/><rect x="10" y="8" width="4" height="13" rx="1"/><rect x="17" y="5" width="4" height="16" rx="1"/></svg>
           Dépenses / jour
-          <span style="margin-left:auto;display:flex;gap:10px;font-size:11px;font-weight:400;color:var(--text-muted)">
+          <span style="margin-left:auto;display:flex;gap:8px;font-size:11px;font-weight:400;color:var(--text-muted)">
             <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#2a78d6;margin-right:3px"></span>Repas</span>
             <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#eda100;margin-right:3px"></span>Snacks</span>
           </span>
         </div>
-        <div class="chart-wrap"><canvas id="chart-depenses" role="img" aria-label="Dépenses des 7 derniers jours"></canvas></div>
+        <div class="chart-period-row">
+          <button class="cp-btn" onclick="setChartPeriod('dep',3,this)">3 j</button>
+          <button class="cp-btn active" onclick="setChartPeriod('dep',7,this)">7 j</button>
+          <button class="cp-btn" onclick="setChartPeriod('dep',30,this)">30 j</button>
+          <button class="cp-btn" onclick="setChartPeriod('dep',0,this)">Tout</button>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-depenses" role="img" aria-label="Dépenses"></canvas></div>
       </div>
 
       <div class="card">
         <div class="card-title">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
           Répartition des dépenses
+        </div>
+        <div class="chart-period-row">
+          <button class="cp-btn" onclick="setChartPeriod('rep',3,this)">3 j</button>
+          <button class="cp-btn active" onclick="setChartPeriod('rep',7,this)">7 j</button>
+          <button class="cp-btn" onclick="setChartPeriod('rep',30,this)">30 j</button>
+          <button class="cp-btn" onclick="setChartPeriod('rep',0,this)">Tout</button>
         </div>
         <div class="donut-row">
           <div style="position:relative;height:140px;width:140px;flex-shrink:0">
@@ -622,7 +746,7 @@
       <div class="card hydra-card">
         <div class="card-title">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
-          Hydratation aujourd'hui
+          Hydratation
         </div>
         <div class="hydra-top">
           <div>
@@ -634,11 +758,17 @@
         <div class="hydra-track"><div class="hydra-fill" id="hydra-fill" style="width:0%;background:#2a78d6"></div></div>
         <div class="drop-item" style="font-size:12px;color:var(--text-muted);margin-bottom:.4rem" id="hydra-pct">0% de l'objectif atteint</div>
         <div class="hydra-drops" id="hydra-drops"></div>
+        <div class="chart-period-row" style="margin-top:.8rem;margin-bottom:0">
+          <button class="cp-btn active" onclick="setChartPeriod('hydra',1,this)">Auj.</button>
+          <button class="cp-btn" onclick="setChartPeriod('hydra',3,this)">3 j</button>
+          <button class="cp-btn" onclick="setChartPeriod('hydra',7,this)">7 j</button>
+          <button class="cp-btn" onclick="setChartPeriod('hydra',30,this)">30 j</button>
+        </div>
         <div class="hydra-avg-row">
-          <span class="hydra-avg-label">Moyenne 7 jours</span>
+          <span class="hydra-avg-label">Moyenne sur la période</span>
           <span class="hydra-avg-val" id="hydra-avg">— ml/jour</span>
         </div>
-        <div class="hydra-chart-wrap"><canvas id="chart-hydra" role="img" aria-label="Hydratation des 7 derniers jours"></canvas></div>
+        <div class="hydra-chart-wrap"><canvas id="chart-hydra" role="img" aria-label="Hydratation"></canvas></div>
       </div>
     </div>
     <div id="page-ajouter" class="page">
@@ -659,48 +789,24 @@
           Un repas complet (midi, soir…). Un prix global pour tout, ou détaille si tu veux.
         </div>
 
-        <!-- Date + total -->
-        <div class="form-section" style="margin-bottom:.7rem">
-          <div class="form-row form-row-2" style="margin-bottom:0">
+        <!-- Carte unifiée du repas -->
+        <div class="form-section">
+          <div class="form-title" style="color:#2a78d6">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+            Repas
+          </div>
+
+          <div class="form-row form-row-2" style="margin-bottom:.7rem">
             <div class="field" style="margin-bottom:0"><label>Date</label><input type="date" id="repas-date"></div>
             <div style="display:flex;flex-direction:column;justify-content:flex-end">
               <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">Total</div>
               <div style="font-size:20px;font-weight:700;color:var(--text)" id="builder-total">0.00 CHF</div>
             </div>
           </div>
-        </div>
 
-        <!-- Plat + prix global -->
-        <div class="form-section">
-          <div class="form-title" style="color:#2a78d6">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
-            Repas
-          </div>
-          <div class="field">
-            <label>Plat</label>
-            <select id="repas-plat-sel" onchange="applyPlatPreset()" style="margin-bottom:6px">
-              <option value="">— Choisir dans le catalogue ou saisir ci-dessous —</option>
-              <optgroup label="🍱 Plats chauds Coop">
-                <option value="Coop — Plat gras (lasagne, gratin…)">Plat gras (lasagne, gratin…)</option>
-                <option value="Coop — Plat standard (pasta, burger…)">Plat standard (pasta, burger…)</option>
-                <option value="Coop — Plat légumes & protéines">Plat légumes &amp; protéines</option>
-              </optgroup>
-              <optgroup label="🍽️ Plats maison / courants">
-                <option value="Riz + viande (poulet, bœuf…)">Riz + viande (poulet, bœuf…)</option>
-                <option value="Pâtes + sauce tomate">Pâtes + sauce tomate</option>
-                <option value="Pâtes + sauce crème / carbonara">Pâtes + sauce crème / carbonara</option>
-                <option value="Salade composée + protéines">Salade composée + protéines</option>
-                <option value="Sandwich / wrap maison">Sandwich / wrap maison</option>
-                <option value="Pizza (surgelée ou livrée)">Pizza (surgelée ou livrée)</option>
-                <option value="Soupe / velouté de légumes">Soupe / velouté de légumes</option>
-                <option value="Œufs (omelette, brouillés…)">Œufs (omelette, brouillés…)</option>
-                <option value="Burger (fast-food ou maison)">Burger (fast-food ou maison)</option>
-                <option value="Poisson + légumes">Poisson + légumes</option>
-              </optgroup>
-            </select>
-            <input type="text" id="repas-desc" placeholder="Ou décris librement : ex. lasagne Coop, döner…">
-          </div>
-          <div class="preview-box" id="repas-plat-preview"></div>
+          <input type="hidden" id="repas-desc">
+          <input type="hidden" id="repas-plat-sel">
+          <div class="preview-box" id="repas-plat-preview" style="display:none"></div>
 
           <!-- Prix global (toujours visible) -->
           <div class="field" id="repas-prix-global-wrap">
@@ -717,11 +823,15 @@
               <div class="score-display" id="repas-score-display" style="color:#eda100">5</div>
             </div>
           </div>
-        </div>
 
-        <!-- Accompagnements (masqués par défaut) -->
-        <div class="form-section">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">
+          <label class="company-check" id="company-check-wrap">
+            <input type="checkbox" id="repas-company-paid">
+            <span class="company-check-box"></span>
+            <span class="company-check-label">🏢 Payé par l'entreprise (déplacement, note de frais…)</span>
+          </label>
+
+          <!-- Accompagnements -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin:1rem 0 .6rem">
             <div class="form-title" style="color:#2a78d6;margin-bottom:0">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               Boissons &amp; accompagnements
@@ -735,19 +845,31 @@
           </div>
           <div id="repas-extras-list" style="margin-bottom:.6rem"></div>
           <div class="extra-form-box">
-            <div class="field" style="margin-bottom:.5rem"><label>Produit</label>
-              <select id="repas-extra-cat" onchange="previewItemFor('repas')">
-                <option value="">Sélectionner…</option>
-                <optgroup label="💧 Boissons"><option value="Coca-Cola">Coca-Cola</option><option value="Coca-Cola Zéro">Coca-Cola Zéro</option><option value="Red Bull">Red Bull</option><option value="Red Bull Sans Sucre">Red Bull Sans Sucre</option><option value="Red Bull Gout">Red Bull Aux Goûts</option><option value="Eau">Eau</option><option value="Thé Froid">Thé Froid</option><option value="Volvic Thé Menthe">Volvic Thé Menthe</option><option value="Focus Water Active">Focus Water Active</option></optgroup>
-                <optgroup label="🍫 Snacks"><option value="Twix">Twix</option><option value="Barre Protéinée">Barre Protéinée</option><option value="Kinder">Kinder</option><option value="Mini Pizza">Mini Pizza</option><option value="Saucisse Feuilletée">Saucisse Feuilletée</option></optgroup>
-              </select>
+            <div class="field" style="margin-bottom:.6rem">
+              <label>Catégorie</label>
+              <div class="cat-tabs" id="repas-cat-tabs">
+                <button type="button" class="cat-tab active" data-cat="Plat" onclick="selectCategory('repas','Plat',this)">🍽️ Plats</button>
+                <button type="button" class="cat-tab" data-cat="Snack" onclick="selectCategory('repas','Snack',this)">🍫 Snacks</button>
+                <button type="button" class="cat-tab" data-cat="Dessert" onclick="selectCategory('repas','Dessert',this)">🍰 Desserts</button>
+                <button type="button" class="cat-tab" data-cat="Boisson" onclick="selectCategory('repas','Boisson',this)">💧 Boissons</button>
+              </div>
+            </div>
+            <div class="field" style="margin-bottom:.5rem">
+              <label>Produit</label>
+              <div class="product-grid" id="repas-product-grid"></div>
+              <input type="hidden" id="repas-extra-cat">
             </div>
             <div class="form-row form-row-2" style="margin-bottom:.5rem">
               <div class="field" style="margin-bottom:0"><label>Qté</label><input type="number" id="repas-extra-qty" value="1" min="1" inputmode="numeric"></div>
-              <div class="field" style="margin-bottom:0" id="repas-extra-prix-wrap" style="display:none">
-                <label>Prix (CHF) <span id="repas-prix-optlabel" style="color:var(--text-muted);font-weight:400">(optionnel)</span></label>
-                <input type="number" id="repas-extra-prix" placeholder="—" min="0" step="0.01" inputmode="decimal">
+              <div class="field" style="margin-bottom:0;display:none" id="repas-extra-ml-wrap">
+                <label>Volume <span style="color:var(--text-muted);font-weight:400">si différent</span></label>
+                <div class="ml-pill-row" id="repas-ml-pills"></div>
+                <input type="number" id="repas-extra-ml" placeholder="ml précis (optionnel)" min="0" step="10" inputmode="numeric" style="margin-top:5px" oninput="document.querySelectorAll('#repas-ml-pills .ml-pill').forEach(b=>b.classList.remove('selected'))">
               </div>
+            </div>
+            <div class="field" style="margin-bottom:.5rem" id="repas-extra-prix-wrap" style="display:none">
+              <label>Prix (CHF) <span id="repas-prix-optlabel" style="color:var(--text-muted);font-weight:400">(optionnel)</span></label>
+              <input type="number" id="repas-extra-prix" placeholder="—" min="0" step="0.01" inputmode="decimal">
             </div>
             <div class="preview-box" id="repas-extra-preview" style="margin-bottom:.5rem"></div>
             <button class="btn-outline" onclick="addItemTo('repas')">
@@ -808,20 +930,31 @@
           </div>
           <div id="snack-extras-list" style="margin-bottom:.6rem"></div>
           <div class="extra-form-box" style="border-color:rgba(237,161,0,0.25)">
-            <div class="field" style="margin-bottom:.5rem"><label>Produit</label>
-              <select id="snack-extra-cat" onchange="previewItemFor('snack')">
-                <option value="">Sélectionner…</option>
-                <optgroup label="💧 Boissons"><option value="Coca-Cola">Coca-Cola</option><option value="Coca-Cola Zéro">Coca-Cola Zéro</option><option value="Red Bull">Red Bull</option><option value="Red Bull Sans Sucre">Red Bull Sans Sucre</option><option value="Red Bull Gout">Red Bull Aux Goûts</option><option value="Eau">Eau</option><option value="Thé Froid">Thé Froid</option><option value="Volvic Thé Menthe">Volvic Thé Menthe</option><option value="Focus Water Active">Focus Water Active</option></optgroup>
-                <optgroup label="🍫 Snacks"><option value="Twix">Twix</option><option value="Barre Protéinée">Barre Protéinée</option><option value="Kinder">Kinder</option><option value="Mini Pizza">Mini Pizza</option><option value="Saucisse Feuilletée">Saucisse Feuilletée</option></optgroup>
-                <optgroup label="🍽️ Plats maison / courants"><option value="Riz + viande (poulet, bœuf…)">Riz + viande</option><option value="Pâtes + sauce tomate">Pâtes + sauce tomate</option><option value="Pâtes + sauce crème / carbonara">Pâtes carbonara</option><option value="Salade composée + protéines">Salade composée</option><option value="Sandwich / wrap maison">Sandwich / wrap</option><option value="Pizza (surgelée ou livrée)">Pizza</option><option value="Soupe / velouté de légumes">Soupe légumes</option><option value="Œufs (omelette, brouillés…)">Œufs</option><option value="Burger (fast-food ou maison)">Burger</option><option value="Poisson + légumes">Poisson + légumes</option></optgroup>
-              </select>
+            <div class="field" style="margin-bottom:.6rem">
+              <label>Catégorie</label>
+              <div class="cat-tabs" id="snack-cat-tabs">
+                <button type="button" class="cat-tab" data-cat="Plat" onclick="selectCategory('snack','Plat',this)">🍽️ Plats</button>
+                <button type="button" class="cat-tab active" data-cat="Snack" onclick="selectCategory('snack','Snack',this)">🍫 Snacks</button>
+                <button type="button" class="cat-tab" data-cat="Dessert" onclick="selectCategory('snack','Dessert',this)">🍰 Desserts</button>
+                <button type="button" class="cat-tab" data-cat="Boisson" onclick="selectCategory('snack','Boisson',this)">💧 Boissons</button>
+              </div>
+            </div>
+            <div class="field" style="margin-bottom:.5rem">
+              <label>Produit</label>
+              <div class="product-grid" id="snack-product-grid"></div>
+              <input type="hidden" id="snack-extra-cat">
             </div>
             <div class="form-row form-row-2" style="margin-bottom:.5rem">
               <div class="field" style="margin-bottom:0"><label>Qté</label><input type="number" id="snack-extra-qty" value="1" min="1" inputmode="numeric"></div>
-              <div class="field" style="margin-bottom:0" id="snack-extra-prix-wrap">
-                <label>Prix (CHF) <span id="snack-prix-optlabel" style="color:var(--text-muted);font-weight:400">(optionnel)</span></label>
-                <input type="number" id="snack-extra-prix" placeholder="—" min="0" step="0.01" inputmode="decimal">
+              <div class="field" style="margin-bottom:0;display:none" id="snack-extra-ml-wrap">
+                <label>Volume <span style="color:var(--text-muted);font-weight:400">si différent</span></label>
+                <div class="ml-pill-row" id="snack-ml-pills"></div>
+                <input type="number" id="snack-extra-ml" placeholder="ml précis (optionnel)" min="0" step="10" inputmode="numeric" style="margin-top:5px" oninput="document.querySelectorAll('#snack-ml-pills .ml-pill').forEach(b=>b.classList.remove('selected'))">
               </div>
+            </div>
+            <div class="field" style="margin-bottom:.5rem" id="snack-extra-prix-wrap">
+              <label>Prix (CHF) <span id="snack-prix-optlabel" style="color:var(--text-muted);font-weight:400">(optionnel)</span></label>
+              <input type="number" id="snack-extra-prix" placeholder="—" min="0" step="0.01" inputmode="decimal">
             </div>
             <div class="preview-box" id="snack-extra-preview" style="margin-bottom:.5rem"></div>
             <button class="btn-outline btn-outline-amber" onclick="addItemTo('snack')">
@@ -846,10 +979,54 @@
       <div class="snack-grid" id="grid-boissons"></div>
       <div class="section-head" style="margin-top:1.2rem">Snacks</div>
       <div class="snack-grid" id="grid-snacks"></div>
+      <div class="section-head" style="margin-top:1.2rem">Desserts</div>
+      <div class="snack-grid" id="grid-desserts"></div>
     </div>
 
-    <!-- ══ HISTORIQUE ══ -->
+    <!-- ══ RÉGLAGES ══ -->
     <div id="page-historique" class="page">
+
+      <!-- Créer un produit perso -->
+      <div class="card" style="margin-bottom:.9rem">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Créer un produit
+        </div>
+        <div class="field"><label>Nom du produit</label><input type="text" id="custom-name" placeholder="Ex : Café latte, Pomme, Müesli…"></div>
+        <div class="form-row form-row-2" style="margin-bottom:.75rem">
+          <div class="field" style="margin-bottom:0"><label>Catégorie</label>
+            <select id="custom-cat" onchange="document.getElementById('custom-ml-wrap').style.display = this.value==='Boisson' ? 'block' : 'none'">
+              <option value="Plat">🍽️ Plat</option>
+              <option value="Snack">🍫 Snack</option>
+              <option value="Dessert">🍰 Dessert</option>
+              <option value="Boisson">💧 Boisson</option>
+            </select>
+          </div>
+          <div class="field" style="margin-bottom:0"><label>Emoji</label><input type="text" id="custom-emoji" placeholder="🍎" maxlength="4"></div>
+        </div>
+        <div class="score-slider-wrap">
+          <label>Score nutritionnel — <span id="custom-score-label" style="font-weight:600;color:#eda100">5/10</span></label>
+          <div class="score-slider-row">
+            <span style="font-size:11px;color:var(--text-muted)">1</span>
+            <input type="range" id="custom-score" min="1" max="10" value="5" step="1" oninput="updateCustomScore(this.value)">
+            <span style="font-size:11px;color:var(--text-muted)">10</span>
+            <div class="score-display" id="custom-score-display" style="color:#eda100">5</div>
+          </div>
+        </div>
+        <div class="form-row form-row-2" style="margin-bottom:.75rem">
+          <div class="field" style="margin-bottom:0"><label>Calories (~)</label><input type="number" id="custom-cal" placeholder="120" min="0" inputmode="numeric"></div>
+          <div class="field" style="margin-bottom:0"><label>Sucres (g)</label><input type="number" id="custom-sucres" placeholder="8" min="0" step="0.1" inputmode="decimal"></div>
+        </div>
+        <div class="field" id="custom-ml-wrap" style="display:none">
+          <label>Volume par défaut (ml)</label>
+          <input type="number" id="custom-ml" placeholder="330" min="0" step="10" inputmode="numeric">
+        </div>
+        <div class="field"><label>Note / justification</label><input type="text" id="custom-note" placeholder="Ex : fait maison, peu transformé…"></div>
+        <button class="btn-add" onclick="addCustomProduct()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Ajouter au catalogue
+        </button>
+      </div>
 
       <!-- Export / Import -->
       <div class="card" style="margin-bottom:.9rem">
@@ -869,7 +1046,7 @@
           <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
         </div>
         <div style="font-size:11px;color:var(--text-muted);margin-top:.6rem;line-height:1.5">
-          L'export sauvegarde toutes tes entrées en fichier JSON. L'import fusionne les données importées avec les existantes.
+          L'export sauvegarde toutes tes entrées et tes produits perso en fichier JSON. L'import fusionne les données importées avec les existantes.
         </div>
       </div>
 
@@ -902,28 +1079,41 @@
       <span class="nav-icon">📋</span>
       <span>Catalogue</span>
     </button>
-    <button class="nav-btn" onclick="showPage('historique',this)" aria-label="Historique">
-      <span class="nav-icon">🕐</span>
-      <span>Historique</span>
+    <button class="nav-btn" onclick="showPage('historique',this)" aria-label="Réglages">
+      <span class="nav-icon">⚙️</span>
+      <span>Réglages</span>
     </button>
   </nav>
 </div>
 
 <div class="toast" id="toast"></div>
 
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal-box">
+    <div class="modal-title" id="confirm-title">Confirmer</div>
+    <div class="modal-text" id="confirm-text"></div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-cancel" onclick="closeConfirmModal()">Annuler</button>
+      <button class="modal-btn modal-btn-confirm" id="confirm-btn-yes">Supprimer</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 // ── Catalogue ──
-const CATALOGUE = {
+const DEFAULT_CATALOGUE = {
   // ── Boissons ──
   "Coca-Cola":           {cat:"Boisson",score:2,note:"Très sucré, colorants, acide phosphorique. À limiter.",cal:139,sucres:35,emoji:"🥤",ml:330,hydra:false},
   "Coca-Cola Zéro":      {cat:"Boisson",score:4,note:"Sans sucre mais édulcorants. Meilleur que le classique.",cal:2,sucres:0,emoji:"🥤",ml:330,hydra:true},
   "Red Bull":            {cat:"Boisson",score:2,note:"Caféine élevée, sucres, taurine. Consommation limitée.",cal:110,sucres:27,emoji:"⚡",ml:250,hydra:false},
   "Red Bull Sans Sucre": {cat:"Boisson",score:4,note:"Sans sucre, caféine modérée. Mieux que le classique.",cal:10,sucres:0,emoji:"⚡",ml:250,hydra:false},
   "Red Bull Gout":       {cat:"Boisson",score:3,note:"Édulcorants + arômes artificiels. Modéré.",cal:15,sucres:0,emoji:"⚡",ml:250,hydra:false},
-  "Eau":                 {cat:"Boisson",score:10,note:"Parfait. Aucun sucre, aucune calorie, hydratation idéale.",cal:0,sucres:0,emoji:"💧",ml:500,hydra:true},
+  "Verre d'eau (gratuit)":{cat:"Boisson",score:10,note:"Parfait. Aucun sucre, aucune calorie, hydratation idéale. Robinet ou fontaine.",cal:0,sucres:0,emoji:"🥛",ml:200,hydra:true},
+  "Bouteille d'eau":     {cat:"Boisson",score:10,note:"Parfait. Aucun sucre, aucune calorie, hydratation idéale.",cal:0,sucres:0,emoji:"💧",ml:500,hydra:true},
   "Thé Froid":           {cat:"Boisson",score:5,note:"Sucré mais moins que les sodas. Variable selon la marque.",cal:35,sucres:8,emoji:"🍵",ml:330,hydra:true},
   "Volvic Thé Menthe":   {cat:"Boisson",score:6,note:"Eau minérale légèrement sucrée, naturel.",cal:20,sucres:5,emoji:"🌿",ml:500,hydra:true},
+  "Thé Gingembre Naturaplan (Coop)": {cat:"Boisson",score:5,note:"Thé vert bio au gingembre et agrumes. Contient 5.4g de sucre/100ml — sucré comme un soda léger malgré l'image healthy. Bio et équitable.",cal:22,sucres:5.4,emoji:"🫖",ml:500,hydra:true},
   "Focus Water Active":  {cat:"Boisson",score:8,note:"Eau enrichie vitamines B + électrolytes, très peu de calories. Excellent choix.",cal:15,sucres:2,emoji:"🎯",ml:500,hydra:true,isNew:false},
   // ── Snacks ──
   "Twix":                {cat:"Snack",score:2,note:"Riche en sucres et graisses saturées. À limiter.",cal:250,sucres:27,emoji:"🍫"},
@@ -946,7 +1136,121 @@ const CATALOGUE = {
   "Œufs (omelette, brouillés…)":             {cat:"Plat",score:7,note:"Protéines complètes, graisses saines, peu de glucides. Très bon repas rapide.",cal:220,sucres:1,emoji:"🍳"},
   "Burger (fast-food ou maison)":             {cat:"Plat",score:3,note:"Fast-food : sodium excessif, graisses saturées, portions importantes. Maison = un peu mieux.",cal:580,sucres:9,emoji:"🍔"},
   "Poisson + légumes":                        {cat:"Plat",score:9,note:"Idéal : oméga-3, protéines maigres, vitamines. Un des meilleurs repas possibles.",cal:320,sucres:3,emoji:"🐟"},
+  // ── Desserts ──
+  "Cheesecake":                                {cat:"Dessert",score:3,note:"Riche en graisses saturées (fromage frais, beurre) et en sucre. Plaisir occasionnel.",cal:380,sucres:24,emoji:"🍰"},
+  "Tarte au citron":                           {cat:"Dessert",score:4,note:"Sucré mais moins gras qu'un cheesecake. La pâte reste calorique.",cal:320,sucres:22,emoji:"🍋"},
+  "Moelleux au chocolat":                      {cat:"Dessert",score:3,note:"Beurre, sucre et chocolat en grande quantité. Très calorique, à savourer occasionnellement.",cal:400,sucres:28,emoji:"🍫"},
+  "Glace / sorbet":                            {cat:"Dessert",score:4,note:"Le sorbet est plus léger que la glace crème. Riche en sucre mais peu de graisses si sorbet.",cal:220,sucres:25,emoji:"🍨"},
+  "Tiramisu":                                  {cat:"Dessert",score:3,note:"Mascarpone, sucre, biscuits imbibés de café. Riche et calorique.",cal:350,sucres:20,emoji:"🍮"},
+  "Fruit frais":                                {cat:"Dessert",score:9,note:"Excellent dessert : fibres, vitamines, sucres naturels. Le meilleur choix pour finir un repas.",cal:80,sucres:14,emoji:"🍎"},
+  "Yaourt / fromage blanc + miel":              {cat:"Dessert",score:7,note:"Bonne source de protéines et calcium. Sucre modéré si peu de miel ajouté.",cal:150,sucres:14,emoji:"🥣"},
+  "Mousse au chocolat":                        {cat:"Dessert",score:4,note:"Moins gras qu'un gâteau mais reste sucré. Œufs et chocolat en quantité.",cal:280,sucres:20,emoji:"🍫"},
 };
+
+// ── Produits personnalisés (perso, persistés) ──
+let customProducts = {};
+try { customProducts = JSON.parse(localStorage.getItem('alitrack_custom_products')||'{}'); } catch(e){}
+let deletedProducts = [];
+try { deletedProducts = JSON.parse(localStorage.getItem('alitrack_deleted_products')||'[]'); } catch(e){}
+const saveCustomProducts = () => { try { localStorage.setItem('alitrack_custom_products', JSON.stringify(customProducts)); } catch(e){} };
+const saveDeletedProducts = () => { try { localStorage.setItem('alitrack_deleted_products', JSON.stringify(deletedProducts)); } catch(e){} };
+
+function buildCatalogue() {
+  const merged = {};
+  Object.entries(DEFAULT_CATALOGUE).forEach(([name,info]) => {
+    if(!deletedProducts.includes(name)) merged[name] = info;
+  });
+  Object.entries(customProducts).forEach(([name,info]) => { merged[name] = info; });
+  return merged;
+}
+let CATALOGUE = buildCatalogue();
+
+function refreshCatalogue() {
+  CATALOGUE = buildCatalogue();
+  renderProductGrid('repas');
+  renderProductGrid('snack');
+  renderCatalogue();
+}
+
+// ── Création de produit perso ──
+function updateCustomScore(val) {
+  const v = parseInt(val);
+  const color = scoreColor(v);
+  document.getElementById('custom-score-display').textContent = v;
+  document.getElementById('custom-score-display').style.color = color;
+  document.getElementById('custom-score-label').textContent = v+'/10';
+  document.getElementById('custom-score-label').style.color = color;
+}
+
+function addCustomProduct() {
+  const name = document.getElementById('custom-name').value.trim();
+  const cat = document.getElementById('custom-cat').value;
+  let emoji = document.getElementById('custom-emoji').value.trim();
+  const score = parseInt(document.getElementById('custom-score').value);
+  const cal = parseFloat(document.getElementById('custom-cal').value)||0;
+  const sucres = parseFloat(document.getElementById('custom-sucres').value)||0;
+  const ml = cat==='Boisson' ? (parseInt(document.getElementById('custom-ml').value)||330) : undefined;
+  const note = document.getElementById('custom-note').value.trim() || 'Produit ajouté manuellement.';
+  if(!name){showToast('Donne un nom au produit');return;}
+  if(!emoji) emoji = cat==='Boisson'?'💧':cat==='Snack'?'🍫':cat==='Dessert'?'🍰':'🍽️';
+  if(CATALOGUE[name]){showToast('Ce nom existe déjà dans le catalogue');return;}
+
+  const entry = {cat, score, note, cal, sucres, emoji};
+  if(cat==='Boisson') { entry.ml = ml; entry.hydra = score>=5; }
+  customProducts[name] = entry;
+  saveCustomProducts();
+  refreshCatalogue();
+
+  document.getElementById('custom-name').value='';
+  document.getElementById('custom-emoji').value='';
+  document.getElementById('custom-cal').value='';
+  document.getElementById('custom-sucres').value='';
+  document.getElementById('custom-ml').value='';
+  document.getElementById('custom-note').value='';
+  document.getElementById('custom-score').value='5';
+  updateCustomScore(5);
+  showToast('✅ '+name+' ajouté au catalogue !');
+}
+
+// ── Confirm modal (remplace confirm() natif, plus fiable en PWA/webview) ──
+let pendingConfirmAction = null;
+
+function showConfirmModal(text, onConfirm, title) {
+  document.getElementById('confirm-title').textContent = title || 'Confirmer la suppression';
+  document.getElementById('confirm-text').textContent = text;
+  pendingConfirmAction = onConfirm;
+  const modal = document.getElementById('confirm-modal');
+  modal.classList.add('show');
+  const yesBtn = document.getElementById('confirm-btn-yes');
+  yesBtn.onclick = () => {
+    const action = pendingConfirmAction;
+    closeConfirmModal();
+    if(action) action();
+  };
+}
+
+function closeConfirmModal() {
+  document.getElementById('confirm-modal').classList.remove('show');
+  pendingConfirmAction = null;
+}
+
+function deleteProduct(name) {
+  showConfirmModal(
+    `Supprimer "${name}" du catalogue ? Les entrées déjà enregistrées avec ce produit ne sont pas affectées.`,
+    () => {
+      if(customProducts[name]) {
+        delete customProducts[name];
+        saveCustomProducts();
+      } else {
+        if(!deletedProducts.includes(name)) deletedProducts.push(name);
+        saveDeletedProducts();
+      }
+      refreshCatalogue();
+      showToast('Produit supprimé du catalogue');
+    },
+    'Supprimer ce produit ?'
+  );
+}
 
 // ── Helpers ──
 const scoreColor = s => s>=7?"#1baf7a":s>=4?"#eda100":"#e34948";
@@ -993,22 +1297,6 @@ function updateRepasScore(val) {
   document.getElementById('repas-score-display').style.color = color;
   document.getElementById('score-repas-label').textContent = v+'/10 · '+label;
   document.getElementById('score-repas-label').style.color = color;
-}
-
-// ── Plat preset (repas builder) ──
-function applyPlatPreset() {
-  const val = document.getElementById('repas-plat-sel').value;
-  const box = document.getElementById('repas-plat-preview');
-  if(!val){box.style.display='none';return;}
-  const info = CATALOGUE[val];
-  if(!info){box.style.display='none';return;}
-  // Pre-fill description and score slider
-  document.getElementById('repas-desc').value = val;
-  document.getElementById('repas-score').value = info.score;
-  updateRepasScore(info.score);
-  const s = info.score;
-  box.style.display='block';
-  box.innerHTML=`<strong>${info.emoji} ${val}</strong> — Score suggéré : <strong style="color:${scoreColor(s)}">${s}/10</strong><br>${info.note}<br><span style="color:var(--text-muted)">~${info.cal} kcal · ${info.sucres}g sucres</span>`;
 }
 
 // ── Mode switcher ──
@@ -1068,14 +1356,24 @@ function addItemTo(mode) {
   const qty = parseInt(document.getElementById(mode+'-extra-qty').value)||1;
   const prixRaw = document.getElementById(mode+'-extra-prix').value;
   const prix = prixRaw !== '' ? parseFloat(prixRaw) : null; // null = no individual price
+  const mlRaw = document.getElementById(mode+'-extra-ml').value;
   if(!cat){showToast('Choisis un produit');return;}
   if(detailMode[mode] && (prix===null||isNaN(prix)||prix<0)){showToast('Entre un prix pour cet élément');return;}
   const info = CATALOGUE[cat];
-  builderItems[mode].push({name:cat, cat:info.cat, score:info.score, emoji:info.emoji, prix:prix||0, qty, ml:info.ml||0, hydra:info.hydra||false});
+  const customMl = mlRaw !== '' ? parseInt(mlRaw) : null;
+  const finalMl = customMl !== null ? customMl : (info.ml||0);
+  builderItems[mode].push({name:cat, cat:info.cat, score:info.score, emoji:info.emoji, prix:prix||0, qty, ml:finalMl, hydra:info.hydra||false});
+  // Auto-suggest the meal quality slider when adding a main dish
+  if(mode==='repas' && info.cat==='Plat') {
+    document.getElementById('repas-score').value = info.score;
+    updateRepasScore(info.score);
+  }
   document.getElementById(mode+'-extra-cat').value='';
   document.getElementById(mode+'-extra-prix').value='';
   document.getElementById(mode+'-extra-qty').value='1';
+  document.getElementById(mode+'-extra-ml').value='';
   document.getElementById(mode+'-extra-preview').style.display='none';
+  document.querySelectorAll(`#${mode}-product-grid .product-btn`).forEach(b=>b.classList.remove('selected'));
   renderItemsList(mode);
   if(detailMode[mode]) updateBuilderTotal(mode);
   showToast('✅ '+cat+' ajouté');
@@ -1087,9 +1385,13 @@ function saveSession(mode) {
   const items = builderItems[mode];
 
   if(mode==='repas') {
-    const desc = document.getElementById('repas-desc').value.trim();
     const score = parseInt(document.getElementById('repas-score').value);
-    if(!desc){showToast('Décris le plat');return;}
+    if(!items.length){showToast('Ajoute au moins un élément (plat, boisson, snack…)');return;}
+    // Auto-build description: plat(s) first, then other items
+    const plats = items.filter(e=>e.cat==='Plat');
+    const others = items.filter(e=>e.cat!=='Plat');
+    const ordered = [...plats, ...others];
+    const desc = ordered.map(e=>e.name+(e.qty>1?' ×'+e.qty:'')).join(', ');
     // Price: global or sum of detail
     let prix;
     if(detailMode.repas) {
@@ -1100,21 +1402,20 @@ function saveSession(mode) {
       if(isNaN(prix)||prix<0){showToast('Entre un prix pour ce repas');return;}
     }
     const sessionId = Date.now();
-    entries.push({id:sessionId, date:entryDate, type:'Repas', desc, prix, score, sessionId});
+    const companyPaid = document.getElementById('repas-company-paid').checked;
+    entries.push({id:sessionId, date:entryDate, type:'Repas', desc, prix, score, sessionId, companyPaid});
     items.forEach((ex,i) => {
       entries.push({id:sessionId+i+1, date:entryDate, type:ex.cat,
         desc:ex.name+(ex.qty>1?' ×'+ex.qty:''),
         prix: detailMode.repas ? (ex.prix||0) : 0,
-        score:ex.score, qty:ex.qty, ml:ex.ml, hydra:ex.hydra, linkedRepas:desc, sessionId});
+        score:ex.score, qty:ex.qty, ml:ex.ml, hydra:ex.hydra, linkedRepas:desc, sessionId, companyPaid});
     });
-    document.getElementById('repas-desc').value='';
     document.getElementById('repas-prix').value='';
     document.getElementById('repas-score').value='5';
-    document.getElementById('repas-plat-sel').value='';
-    document.getElementById('repas-plat-preview').style.display='none';
+    document.getElementById('repas-company-paid').checked=false;
     updateRepasScore(5);
     document.getElementById('repas-date').value=getTodayStr();
-    showToast('✅ Repas enregistré !');
+    showToast(companyPaid ? '✅ Repas enregistré (entreprise) !' : '✅ Repas enregistré !');
 
   } else {
     if(!items.length && !document.getElementById('snack-prix-global').value){showToast('Ajoute au moins un élément');return;}
@@ -1176,22 +1477,98 @@ function removeItem(mode, idx) {
   updateBuilderTotal(mode);
 }
 
+// ── Category tabs + product grid (point 4) ──
+const activeCategory = { repas: 'Plat', snack: 'Snack' };
+
+function selectCategory(mode, cat, btn) {
+  activeCategory[mode] = cat;
+  document.querySelectorAll(`#${mode}-cat-tabs .cat-tab`).forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  // Reset current selection when switching category
+  document.getElementById(mode+'-extra-cat').value = '';
+  renderProductGrid(mode);
+  previewItemFor(mode);
+}
+
+function renderProductGrid(mode) {
+  const cat = activeCategory[mode];
+  const grid = document.getElementById(mode+'-product-grid');
+  if(!grid) return;
+  const products = Object.entries(CATALOGUE)
+    .filter(([name,info]) => info.cat === cat)
+    .sort((a,b) => b[1].score - a[1].score);
+  const selectedVal = document.getElementById(mode+'-extra-cat').value;
+  grid.innerHTML = products.map(([name,info]) => {
+    const isSel = name === selectedVal;
+    return `<button type="button" class="product-btn${isSel?' selected':''}" onclick="pickProduct('${mode}','${name.replace(/'/g,"\\'")}',this)">
+      <span class="product-btn-emoji">${info.emoji}</span>
+      <span class="product-btn-name">${name}</span>
+      <span class="product-btn-score" style="color:${scoreColor(info.score)}">${info.score}/10</span>
+    </button>`;
+  }).join('');
+}
+
+function pickProduct(mode, name, btn) {
+  document.getElementById(mode+'-extra-cat').value = name;
+  document.querySelectorAll(`#${mode}-product-grid .product-btn`).forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  previewItemFor(mode);
+}
+
+const ML_PRESETS = [200, 250, 330, 500, 750, 1000, 1500, 2000];
+
+function renderMlPills(mode, defaultMl) {
+  const wrap = document.getElementById(mode+'-ml-pills');
+  if(!wrap) return;
+  // Make sure the default value of the product is offered even if not in the standard list
+  const presets = ML_PRESETS.includes(defaultMl) ? ML_PRESETS : [...ML_PRESETS, defaultMl].sort((a,b)=>a-b);
+  wrap.innerHTML = presets.map(v => {
+    const label = v>=1000 ? (v/1000)+'L' : v+'ml';
+    const isDefault = v === defaultMl;
+    return `<button type="button" class="ml-pill${isDefault?' selected':''}" data-ml="${v}" onclick="pickMlPill('${mode}',${v},this)">${label}${isDefault?' ★':''}</button>`;
+  }).join('');
+  // Pre-fill hidden numeric value with default (so addItemTo uses it unless user types custom)
+  const mlInput = document.getElementById(mode+'-extra-ml');
+  if(mlInput) mlInput.value = '';
+}
+
+function pickMlPill(mode, ml, btn) {
+  document.querySelectorAll(`#${mode}-ml-pills .ml-pill`).forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById(mode+'-extra-ml').value = ml;
+}
+
 function previewItemFor(mode) {
   const cat = document.getElementById(mode+'-extra-cat').value;
   const box = document.getElementById(mode+'-extra-preview');
   const info = CATALOGUE[cat];
-  if(!info){box.style.display='none';return;}
+  const mlWrap = document.getElementById(mode+'-extra-ml-wrap');
+  const mlInput = document.getElementById(mode+'-extra-ml');
+  if(!info){box.style.display='none'; if(mlWrap) mlWrap.style.display='none'; return;}
   const s=info.score;
   box.style.display='block';
-  box.innerHTML=`<strong>${cat}</strong> — Score : <strong style="color:${scoreColor(s)}">${s}/10</strong><br>${info.note}<br><span style="color:var(--text-muted)">~${info.cal} kcal · ${info.sucres}g sucres${info.ml?' · '+info.ml+'ml':''}</span>`;
+  box.innerHTML=`<strong>${cat}</strong> — Score : <strong style="color:${scoreColor(s)}">${s}/10</strong><br>${info.note}<br><span style="color:var(--text-muted)">~${info.cal} kcal · ${info.sucres}g sucres${info.ml?' · '+info.ml+'ml par défaut':''}</span>`;
+  // Show ml field only for drinks (cat === Boisson)
+  if(mlWrap) {
+    if(info.cat === 'Boisson') {
+      mlWrap.style.display = 'block';
+      renderMlPills(mode, info.ml || 0);
+      if(mlInput) mlInput.placeholder = 'ml précis (optionnel)';
+    } else {
+      mlWrap.style.display = 'none';
+      if(mlInput) mlInput.value = '';
+    }
+  }
 }
 
 // ── Export / Import ──
 function exportData() {
   const data = {
-    version: 2,
+    version: 3,
     exportDate: new Date().toISOString(),
-    entries: entries
+    entries: entries,
+    customProducts: customProducts,
+    deletedProducts: deletedProducts
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -1218,6 +1595,16 @@ function importData(event) {
       const newEntries = imported.filter(e=>!existingIds.has(e.id));
       entries = [...entries, ...newEntries];
       save();
+      // Merge custom products and deleted products if present
+      if(data.customProducts) {
+        customProducts = {...customProducts, ...data.customProducts};
+        saveCustomProducts();
+      }
+      if(data.deletedProducts) {
+        deletedProducts = [...new Set([...deletedProducts, ...data.deletedProducts])];
+        saveDeletedProducts();
+      }
+      refreshCatalogue();
       renderHistory();
       renderDashboard();
       showToast(`✅ ${newEntries.length} entrée(s) importée(s) !`);
@@ -1249,10 +1636,15 @@ function toggleSession(sid) {
 }
 
 function deleteSession(sid) {
-  if(!confirm('Supprimer ce repas/snack et tous ses éléments ?')) return;
-  entries = entries.filter(e => e.sessionId !== sid && e.id !== sid);
-  save(); renderHistory(); renderDashboard();
-  showToast('Supprimé');
+  showConfirmModal(
+    'Supprimer ce repas/snack et tous ses éléments ?',
+    () => {
+      entries = entries.filter(e => e.sessionId !== sid && e.id !== sid);
+      save(); renderHistory(); renderDashboard();
+      showToast('Supprimé');
+    },
+    'Supprimer cette entrée ?'
+  );
 }
 
 function deleteItem(id) {
@@ -1331,27 +1723,42 @@ function renderHistory() {
 }
 
 // ── Catalogue ──
+function escapeHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 function renderCatalogue() {
-  ['grid-boissons','grid-snacks','grid-plats'].forEach(id => {
+  ['grid-boissons','grid-snacks','grid-plats','grid-desserts'].forEach(id => {
     const el = document.getElementById(id); if(el) el.innerHTML='';
   });
   // Sort all entries by score descending within each category
   const sorted = Object.entries(CATALOGUE).sort((a,b) => b[1].score - a[1].score);
   sorted.forEach(([name,info]) => {
     const s = info.score;
-    const badge = info.isNew ? `<span class="new-badge">Nouveau</span>` : '';
+    const isCustom = !!customProducts[name];
+    const badge = info.isNew ? `<span class="new-badge">Nouveau</span>` : isCustom ? `<span class="new-badge" style="background:#e8f0fe;color:#2a78d6">Perso</span>` : '';
     const scoreLabel = s>=9?'Excellent':s>=7?'Très bon':s>=6?'Bon':s>=4?'Correct':'À limiter';
-    const html = `<div class="snack-card">
-      <div class="snack-name">${info.emoji} ${name}${badge}</div>
+    const html = `<div class="snack-card" style="position:relative">
+      <button type="button" class="del-product-btn" data-product-name="${escapeHtml(name)}" aria-label="Supprimer du catalogue">✕</button>
+      <div class="snack-name">${info.emoji} ${escapeHtml(name)}${badge}</div>
       <div class="snack-meta">~${info.cal} kcal · ${info.sucres}g sucres</div>
       <div class="snack-score-txt" style="color:${scoreColor(s)}">${s}/10 — ${scoreLabel}</div>
-      <div class="snack-note">${info.note}</div>
+      <div class="snack-note">${escapeHtml(info.note)}</div>
     </div>`;
-    const gridId = info.cat==='Boisson'?'grid-boissons':info.cat==='Snack'?'grid-snacks':'grid-plats';
+    const gridId = info.cat==='Boisson'?'grid-boissons':info.cat==='Snack'?'grid-snacks':info.cat==='Dessert'?'grid-desserts':'grid-plats';
     const el = document.getElementById(gridId);
     if(el) el.innerHTML += html;
   });
 }
+
+// Délégation d'événements pour les boutons de suppression (plus fiable que onclick inline)
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('.del-product-btn');
+  if(btn) {
+    const name = btn.getAttribute('data-product-name');
+    if(name) deleteProduct(name);
+  }
+});
 
 // ── Hydration helpers ──
 const HYDRA_GOAL = 2000; // ml/jour
@@ -1366,7 +1773,8 @@ function getHydraForDay(dateStr) {
     }, 0);
 }
 
-function renderHydration(now) {
+function renderHydration(now, days) {
+  days = days || 1;
   const todayStr = now.toDateString();
   const todayMl = getHydraForDay(todayStr);
   const pct = Math.min(100, Math.round(todayMl / HYDRA_GOAL * 100));
@@ -1391,20 +1799,21 @@ function renderHydration(now) {
     dropsEl.innerHTML = todayDrinks.map(e => {
       const name = e.desc.split(' ×')[0];
       const info = CATALOGUE[name];
-      const ml = info ? info.ml*(e.qty||1) : 0;
-      return `<div class="drop-item">${info?info.emoji:'💧'} ${e.desc} <strong style="color:${info&&info.hydra?'#2a78d6':'#898781'}">${ml>0?'+'+ml+' ml':'—'}</strong></div>`;
+      const ml = e.ml ? e.ml*(e.qty||1) : (info ? info.ml*(e.qty||1) : 0);
+      return `<div class="drop-item">${info?info.emoji:'💧'} ${e.desc} <strong style="color:${(e.hydra??(info&&info.hydra))?'#2a78d6':'#898781'}">${ml>0?'+'+ml+' ml':'—'}</strong></div>`;
     }).join('');
   } else {
     dropsEl.innerHTML = '<span style="font-size:12px;color:var(--text-muted)">Aucune boisson enregistrée aujourd\'hui</span>';
   }
 
-  // 7-day average
+  // Period average (uses chartPeriods.hydra range, min 1 day)
+  const n = days===0 ? 30 : Math.max(days,1);
   let totalMl = 0, daysWithData = 0;
   const hydraLabels=[], hydraData=[];
-  for(let i=6;i>=0;i--) {
+  for(let i=n-1;i>=0;i--) {
     const d = new Date(now - i*864e5);
     const ml = getHydraForDay(d.toDateString());
-    hydraLabels.push(d.toLocaleDateString('fr-FR',{weekday:'short'}));
+    hydraLabels.push(n<=7 ? d.toLocaleDateString('fr-FR',{weekday:'short'}) : d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}));
     hydraData.push(ml);
     if(ml>0){totalMl+=ml; daysWithData++;}
   }
@@ -1420,13 +1829,13 @@ function renderHydration(now) {
     type:'bar',
     data:{labels:hydraLabels, datasets:[
       {data:hydraData, backgroundColor: hydraData.map(v=>v>=HYDRA_GOAL?'#1baf7a':v>=HYDRA_GOAL*0.5?'#eda100':'#e34948'), borderRadius:4, borderSkipped:false},
-      {type:'line', data:Array(7).fill(HYDRA_GOAL), borderColor:'rgba(42,120,214,0.4)', borderWidth:1.5, borderDash:[4,4], pointRadius:0, fill:false}
+      {type:'line', data:Array(n).fill(HYDRA_GOAL), borderColor:'rgba(42,120,214,0.4)', borderWidth:1.5, borderDash:[4,4], pointRadius:0, fill:false}
     ]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>v.raw+' ml'}}},
       scales:{
         y:{beginAtZero:true,ticks:{callback:v=>v>=1000?(v/1000).toFixed(1)+'L':v+'ml',font:{size:10},color:tickColor},grid:{color:gridColor},border:{display:false}},
-        x:{ticks:{font:{size:10},color:tickColor},grid:{display:false},border:{display:false}}
+        x:{ticks:{font:{size:10},color:tickColor,maxRotation:hydraLabels.length>10?45:0},grid:{display:false},border:{display:false}}
       }
     }
   });
@@ -1435,15 +1844,129 @@ function renderHydration(now) {
 // ── Charts ──
 let chartDep, chartSante, chartRep;
 
+// ── Per-chart period state ──
+const chartPeriods = { sante: 7, dep: 7, rep: 7, hydra: 1 };
+
+function setChartPeriod(chart, days, btn) {
+  chartPeriods[chart] = days;
+  btn.closest('.chart-period-row').querySelectorAll('.cp-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const now = new Date();
+  const isDark = matchMedia('(prefers-color-scheme:dark)').matches;
+  const gridColor = isDark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.06)';
+  const tickColor = isDark?'#6b6a66':'#898781';
+  if(chart==='sante') renderChartSante(now, days, isDark, gridColor, tickColor);
+  if(chart==='dep')   renderChartDep(now, days, isDark, gridColor, tickColor);
+  if(chart==='rep')   renderChartRep(now, days, isDark);
+  if(chart==='hydra') renderHydration(now, days);
+}
+
+function buildPeriodLabels(now, days) {
+  const n = days===0 ? 30 : days;
+  const labels=[], dayKeys=[];
+  for(let i=n-1;i>=0;i--) {
+    const d = new Date(now - i*864e5);
+    labels.push(n<=7
+      ? d.toLocaleDateString('fr-FR',{weekday:'short'})
+      : d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}));
+    dayKeys.push(d.toDateString());
+  }
+  return {labels, dayKeys, n};
+}
+
+function renderChartDep(now, days, isDark, gridColor, tickColor) {
+  const {labels, dayKeys} = buildPeriodLabels(now, days);
+  const depRepas=[], depSnacks=[];
+  dayKeys.forEach(ds => {
+    const dayE = entries.filter(e=>new Date(e.date).toDateString()===ds && !e.companyPaid);
+    depRepas.push(parseFloat(dayE.filter(e=>e.type==='Repas'||e.linkedRepas).reduce((s,e)=>s+e.prix,0).toFixed(2)));
+    depSnacks.push(parseFloat(dayE.filter(e=>(e.type==='Snack'||e.type==='Boisson')&&!e.linkedRepas).reduce((s,e)=>s+e.prix,0).toFixed(2)));
+  });
+  if(chartDep) chartDep.destroy();
+  chartDep = new Chart(document.getElementById('chart-depenses'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Repas',data:depRepas,backgroundColor:'#2a78d6',borderRadius:4,borderSkipped:false,stack:'a'},
+      {label:'Snacks',data:depSnacks,backgroundColor:'#eda100',borderRadius:4,borderSkipped:false,stack:'a'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>v.dataset.label+' : '+v.raw.toFixed(2)+' CHF'}}},
+      scales:{y:{beginAtZero:true,stacked:true,ticks:{callback:v=>v+' CHF',font:{size:10},color:tickColor},grid:{color:gridColor},border:{display:false}},
+              x:{stacked:true,ticks:{font:{size:10},color:tickColor,maxRotation:labels.length>10?45:0},grid:{display:false},border:{display:false}}}
+    }
+  });
+}
+
+function renderChartSante(now, days, isDark, gridColor, tickColor) {
+  const {labels, dayKeys} = buildPeriodLabels(now, days);
+  const scFood=[], scDrink=[], scAvg=[];
+  dayKeys.forEach(ds => {
+    const dayE = entries.filter(e=>new Date(e.date).toDateString()===ds);
+    const df=dayE.filter(e=>isFood(e)&&e.score!=null);
+    const dd=dayE.filter(e=>isDrink(e)&&e.score!=null);
+    const sf=df.length?parseFloat((df.reduce((s,e)=>s+e.score,0)/df.length).toFixed(1)):null;
+    const sd=dd.length?parseFloat((dd.reduce((s,e)=>s+e.score,0)/dd.length).toFixed(1)):null;
+    scFood.push(sf); scDrink.push(sd);
+    scAvg.push(sf!=null&&sd!=null?parseFloat(((sf+sd)/2).toFixed(1)):sf??sd??null);
+  });
+  const cutoff = days===0?new Date(0):new Date(now-days*864e5);
+  const pFood  = entries.filter(e=>new Date(e.date)>=cutoff&&isFood(e) &&e.score!=null);
+  const pDrink = entries.filter(e=>new Date(e.date)>=cutoff&&isDrink(e)&&e.score!=null);
+  const sf2 = pFood.length  ? pFood.reduce((s,e)=>s+e.score,0)/pFood.length   : null;
+  const sd2 = pDrink.length ? pDrink.reduce((s,e)=>s+e.score,0)/pDrink.length : null;
+  const sa2 = sf2!=null&&sd2!=null?(sf2+sd2)/2:sf2??sd2;
+  const setScoreEl2 = (valId, lblId, val) => {
+    const el=document.getElementById(valId), lb=document.getElementById(lblId);
+    if(val!=null){el.textContent=val.toFixed(1)+'/10';el.style.color=scoreColor(val);lb.textContent=val>=7?'Excellent':val>=6?'Bon':val>=4?'Correct':'À améliorer';}
+    else{el.textContent='—';el.style.color='var(--text-muted)';lb.textContent='—';}
+  };
+  setScoreEl2('score-food-today','score-food-label',sf2);
+  setScoreEl2('score-drink-today','score-drink-label',sd2);
+  setScoreEl2('score-avg-today','score-avg-label',sa2);
+  if(chartSante) chartSante.destroy();
+  chartSante = new Chart(document.getElementById('chart-sante'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Nourriture',data:scFood, borderColor:'#2a78d6',backgroundColor:'rgba(42,120,214,.07)',borderWidth:2.5,tension:.4,pointRadius:labels.length>14?0:3,pointBackgroundColor:'#2a78d6',pointBorderColor:'#fff',pointBorderWidth:2,spanGaps:true},
+      {label:'Boissons',  data:scDrink,borderColor:'#1baf7a',backgroundColor:'rgba(27,175,122,.07)',borderWidth:2.5,tension:.4,pointRadius:labels.length>14?0:3,pointBackgroundColor:'#1baf7a',pointBorderColor:'#fff',pointBorderWidth:2,spanGaps:true},
+      {label:'Moyenne',   data:scAvg, borderColor:'#898781',backgroundColor:'transparent',borderWidth:1.5,borderDash:[5,4],tension:.4,pointRadius:labels.length>14?0:2,pointBackgroundColor:'#898781',spanGaps:true}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>v.dataset.label+' : '+(v.raw!=null?v.raw+'/10':'—')}}},
+      scales:{y:{min:0,max:10,ticks:{font:{size:10},color:tickColor},grid:{color:gridColor},border:{display:false}},
+              x:{ticks:{font:{size:10},color:tickColor,maxRotation:labels.length>10?45:0},grid:{display:false},border:{display:false}}}
+    }
+  });
+}
+
+function renderChartRep(now, days, isDark) {
+  const cutoff = days===0?new Date(0):new Date(now-days*864e5);
+  const pEntries = entries.filter(e=>new Date(e.date)>=cutoff && !e.companyPaid);
+  const repT=pEntries.filter(e=>e.type==='Repas').reduce((s,e)=>s+e.prix,0);
+  const snT =pEntries.filter(e=>e.type==='Snack').reduce((s,e)=>s+e.prix,0);
+  const boT =pEntries.filter(e=>e.type==='Boisson').reduce((s,e)=>s+e.prix,0);
+  const tot =repT+snT+boT||1;
+  if(chartRep) chartRep.destroy();
+  chartRep = new Chart(document.getElementById('chart-repartition'),{
+    type:'doughnut',
+    data:{labels:['Repas','Snacks','Boissons'],datasets:[{data:[repT,snT,boT],backgroundColor:['#2a78d6','#eda100','#1baf7a'],borderWidth:3,borderColor:isDark?'#1c1c1a':'#ffffff'}]},
+    options:{responsive:false,plugins:{legend:{display:false}},cutout:'62%'}
+  });
+  document.getElementById('donut-legend').innerHTML=[
+    ['Repas','#2a78d6',repT],['Snacks','#eda100',snT],['Boissons','#1baf7a',boT]
+  ].map(([l,c,v])=>`<div><span class="legend-dot" style="background:${c}"></span>${l} — ${v.toFixed(2)} CHF (${Math.round(v/tot*100)}%)</div>`).join('');
+}
+
 function renderDashboard() {
   const now = new Date();
   const todayStr = now.toDateString();
   const weekAgo = new Date(now - 7*864e5);
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const toDay   = entries.filter(e=>new Date(e.date).toDateString()===todayStr).reduce((s,e)=>s+e.prix,0);
-  const toWeek  = entries.filter(e=>new Date(e.date)>=weekAgo).reduce((s,e)=>s+e.prix,0);
-  const toMonth = entries.filter(e=>new Date(e.date)>=monthStart).reduce((s,e)=>s+e.prix,0);
+  const toDay   = entries.filter(e=>new Date(e.date).toDateString()===todayStr && !e.companyPaid).reduce((s,e)=>s+e.prix,0);
+  const toWeek  = entries.filter(e=>new Date(e.date)>=weekAgo && !e.companyPaid).reduce((s,e)=>s+e.prix,0);
+  const toMonth = entries.filter(e=>new Date(e.date)>=monthStart && !e.companyPaid).reduce((s,e)=>s+e.prix,0);
+  const companyMonth = entries.filter(e=>new Date(e.date)>=monthStart && e.companyPaid && e.type==='Repas').reduce((s,e)=>s+e.prix,0);
 
   const avg = arr => arr.length ? arr.reduce((s,e)=>s+e.score,0)/arr.length : null;
 
@@ -1465,66 +1988,16 @@ function renderDashboard() {
   document.getElementById('kpi-week').textContent   = toWeek.toFixed(2)+' CHF';
   document.getElementById('kpi-month').textContent  = toMonth.toFixed(2)+' CHF';
   document.getElementById('kpi-score').textContent  = savg!=null ? savg.toFixed(1)+'/10' : '—';
+  const kpiCompany = document.getElementById('kpi-company');
+  if(kpiCompany) kpiCompany.textContent = companyMonth.toFixed(2)+' CHF';
 
   const isDark = matchMedia('(prefers-color-scheme:dark)').matches;
   const gridColor = isDark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.06)';
   const tickColor = isDark?'#6b6a66':'#898781';
 
-  const labels=[]; const depRepas=[],depSnacks=[],scFood=[],scDrink=[],scAvg=[];
-  for(let i=6;i>=0;i--){
-    const d=new Date(now-i*864e5); const ds=d.toDateString();
-    labels.push(d.toLocaleDateString('fr-FR',{weekday:'short'}));
-    const dayE=entries.filter(e=>new Date(e.date).toDateString()===ds);
-    depRepas.push(parseFloat(dayE.filter(e=>e.type==='Repas'||e.linkedRepas).reduce((s,e)=>s+e.prix,0).toFixed(2)));
-    depSnacks.push(parseFloat(dayE.filter(e=>(e.type==='Snack'||e.type==='Boisson')&&!e.linkedRepas).reduce((s,e)=>s+e.prix,0).toFixed(2)));
-    const df=dayE.filter(e=>isFood(e)&&e.score!=null); const dd=dayE.filter(e=>isDrink(e)&&e.score!=null);
-    const sf=df.length?parseFloat((df.reduce((s,e)=>s+e.score,0)/df.length).toFixed(1)):null;
-    const sd=dd.length?parseFloat((dd.reduce((s,e)=>s+e.score,0)/dd.length).toFixed(1)):null;
-    scFood.push(sf); scDrink.push(sd);
-    scAvg.push(sf!=null&&sd!=null?parseFloat(((sf+sd)/2).toFixed(1)):sf??sd??null);
-  }
-
-  if(chartDep) chartDep.destroy();
-  chartDep = new Chart(document.getElementById('chart-depenses'),{
-    type:'bar',
-    data:{labels,datasets:[
-      {label:'Repas',data:depRepas,backgroundColor:'#2a78d6',borderRadius:4,borderSkipped:false,stack:'a'},
-      {label:'Snacks',data:depSnacks,backgroundColor:'#eda100',borderRadius:4,borderSkipped:false,stack:'a'}
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>v.dataset.label+' : '+v.raw.toFixed(2)+' CHF'}}},
-      scales:{y:{beginAtZero:true,stacked:true,ticks:{callback:v=>v+' CHF',font:{size:10},color:tickColor},grid:{color:gridColor},border:{display:false}},x:{stacked:true,ticks:{font:{size:10},color:tickColor},grid:{display:false},border:{display:false}}}
-    }
-  });
-
-  if(chartSante) chartSante.destroy();
-  chartSante = new Chart(document.getElementById('chart-sante'),{
-    type:'line',
-    data:{labels,datasets:[
-      {label:'Nourriture',data:scFood, borderColor:'#2a78d6',backgroundColor:'rgba(42,120,214,.07)',borderWidth:2.5,tension:.4,pointRadius:4,pointBackgroundColor:'#2a78d6',pointBorderColor:'#fff',pointBorderWidth:2,spanGaps:true},
-      {label:'Boissons',  data:scDrink,borderColor:'#1baf7a',backgroundColor:'rgba(27,175,122,.07)',borderWidth:2.5,tension:.4,pointRadius:4,pointBackgroundColor:'#1baf7a',pointBorderColor:'#fff',pointBorderWidth:2,spanGaps:true},
-      {label:'Moyenne',   data:scAvg, borderColor:'#898781',backgroundColor:'transparent',borderWidth:1.5,borderDash:[5,4],tension:.4,pointRadius:3,pointBackgroundColor:'#898781',spanGaps:true}
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>v.dataset.label+' : '+(v.raw!=null?v.raw+'/10':'—')}}},
-      scales:{y:{min:0,max:10,ticks:{font:{size:10},color:tickColor},grid:{color:gridColor},border:{display:false}},x:{ticks:{font:{size:10},color:tickColor},grid:{display:false},border:{display:false}}}
-    }
-  });
-
-  const repT=entries.filter(e=>e.type==='Repas').reduce((s,e)=>s+e.prix,0);
-  const snT =entries.filter(e=>e.type==='Snack').reduce((s,e)=>s+e.prix,0);
-  const boT =entries.filter(e=>e.type==='Boisson').reduce((s,e)=>s+e.prix,0);
-  const tot =repT+snT+boT||1;
-
-  if(chartRep) chartRep.destroy();
-  chartRep = new Chart(document.getElementById('chart-repartition'),{
-    type:'doughnut',
-    data:{labels:['Repas','Snacks','Boissons'],datasets:[{data:[repT,snT,boT],backgroundColor:['#2a78d6','#eda100','#1baf7a'],borderWidth:3,borderColor:isDark?'#1c1c1a':'#ffffff'}]},
-    options:{responsive:false,plugins:{legend:{display:false}},cutout:'62%'}
-  });
-  document.getElementById('donut-legend').innerHTML=[
-    ['Repas','#2a78d6',repT],['Snacks','#eda100',snT],['Boissons','#1baf7a',boT]
-  ].map(([l,c,v])=>`<div><span class="legend-dot" style="background:${c}"></span>${l} — ${v.toFixed(2)} CHF (${Math.round(v/tot*100)}%)</div>`).join('');
+  renderChartSante(now, chartPeriods.sante, isDark, gridColor, tickColor);
+  renderChartDep(now, chartPeriods.dep, isDark, gridColor, tickColor);
+  renderChartRep(now, chartPeriods.rep, isDark);
 
   // Gauge uses its own period (gaugeDays)
   const cutoffG = gaugeDays===0 ? new Date(0) : new Date(now - gaugeDays*864e5);
@@ -1601,6 +2074,8 @@ document.getElementById('repas-date').value = getTodayStr();
 document.getElementById('snack-date').value = getTodayStr();
 renderItemsList('repas');
 renderItemsList('snack');
+renderProductGrid('repas');
+renderProductGrid('snack');
 renderDashboard();
 renderCatalogue();
 </script>
