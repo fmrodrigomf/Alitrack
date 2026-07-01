@@ -481,6 +481,7 @@
   .product-btn-emoji { font-size: 19px; line-height: 1; }
   .product-btn-name { font-size: 10.5px; font-weight: 600; line-height: 1.25; }
   .product-btn-score { font-size: 9.5px; font-weight: 700; margin-top: 1px; }
+  .product-btn-cal { font-size: 9px; color: var(--text-muted); margin-top: 1px; }
 
   /* ── ML preset pills (boisson volume) ── */
   .ml-pill-row { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -770,9 +771,42 @@
         </div>
         <div class="hydra-chart-wrap"><canvas id="chart-hydra" role="img" aria-label="Hydratation"></canvas></div>
       </div>
+
+      <!-- Calories -->
+      <div class="card">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          Calories consommées
+        </div>
+        <div class="chart-period-row">
+          <button class="cp-btn active" onclick="setChartPeriod('cal',1,this)">Auj.</button>
+          <button class="cp-btn" onclick="setChartPeriod('cal',3,this)">3 j</button>
+          <button class="cp-btn" onclick="setChartPeriod('cal',7,this)">7 j</button>
+          <button class="cp-btn" onclick="setChartPeriod('cal',30,this)">30 j</button>
+        </div>
+        <!-- Today summary -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:.9rem">
+          <div style="text-align:center">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">🍽️ Aujourd'hui</div>
+            <div style="font-size:24px;font-weight:700" id="cal-today-val">—</div>
+            <div style="font-size:10px;color:var(--text-muted)">kcal</div>
+          </div>
+          <div style="text-align:center;border-left:0.5px solid var(--border);border-right:0.5px solid var(--border)">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">📊 Moy. période</div>
+            <div style="font-size:24px;font-weight:700" id="cal-avg-val">—</div>
+            <div style="font-size:10px;color:var(--text-muted)">kcal/jour</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">⚠️ Seuil</div>
+            <div style="font-size:24px;font-weight:700;color:#eda100" id="cal-threshold-val">2 500</div>
+            <div style="font-size:10px;color:var(--text-muted)">kcal/jour</div>
+          </div>
+        </div>
+        <div id="cal-status-badge" style="display:none;margin-bottom:.75rem;text-align:center"></div>
+        <div style="position:relative;height:200px"><canvas id="chart-cal" role="img" aria-label="Calories consommées"></canvas></div>
+      </div>
     </div>
     <div id="page-ajouter" class="page">
-
       <!-- ── Sélecteur de mode ── -->
       <div class="mode-switcher">
         <button class="mode-btn active" id="mode-btn-repas" onclick="switchMode('repas')">
@@ -1136,6 +1170,7 @@ const DEFAULT_CATALOGUE = {
   "Œufs (omelette, brouillés…)":             {cat:"Plat",score:7,note:"Protéines complètes, graisses saines, peu de glucides. Très bon repas rapide.",cal:220,sucres:1,emoji:"🍳"},
   "Burger (fast-food ou maison)":             {cat:"Plat",score:3,note:"Fast-food : sodium excessif, graisses saturées, portions importantes. Maison = un peu mieux.",cal:580,sucres:9,emoji:"🍔"},
   "Poisson + légumes":                        {cat:"Plat",score:9,note:"Idéal : oméga-3, protéines maigres, vitamines. Un des meilleurs repas possibles.",cal:320,sucres:3,emoji:"🐟"},
+  "Francesinha":                               {cat:"Plat",score:6,note:"Plat portugais cuisiné : pain, charcuterie, fromage fondu, sauce tomate/bière. Riche et calorique mais protéines réelles, pas ultra-transformé.",cal:800,sucres:8,emoji:"🥪"},
   // ── Desserts ──
   "Cheesecake":                                {cat:"Dessert",score:3,note:"Riche en graisses saturées (fromage frais, beurre) et en sucre. Plaisir occasionnel.",cal:380,sucres:24,emoji:"🍰"},
   "Tarte au citron":                           {cat:"Dessert",score:4,note:"Sucré mais moins gras qu'un cheesecake. La pâte reste calorique.",cal:320,sucres:22,emoji:"🍋"},
@@ -1362,7 +1397,7 @@ function addItemTo(mode) {
   const info = CATALOGUE[cat];
   const customMl = mlRaw !== '' ? parseInt(mlRaw) : null;
   const finalMl = customMl !== null ? customMl : (info.ml||0);
-  builderItems[mode].push({name:cat, cat:info.cat, score:info.score, emoji:info.emoji, prix:prix||0, qty, ml:finalMl, hydra:info.hydra||false});
+  builderItems[mode].push({name:cat, cat:info.cat, score:info.score, emoji:info.emoji, prix:prix||0, qty, ml:finalMl, hydra:info.hydra||false, cal:info.cal||0});
   // Auto-suggest the meal quality slider when adding a main dish
   if(mode==='repas' && info.cat==='Plat') {
     document.getElementById('repas-score').value = info.score;
@@ -1403,12 +1438,13 @@ function saveSession(mode) {
     }
     const sessionId = Date.now();
     const companyPaid = document.getElementById('repas-company-paid').checked;
-    entries.push({id:sessionId, date:entryDate, type:'Repas', desc, prix, score, sessionId, companyPaid});
+    const totalCal = items.reduce((s,e)=>(s+(e.cal||0)*e.qty),0);
+    entries.push({id:sessionId, date:entryDate, type:'Repas', desc, prix, score, sessionId, companyPaid, cal:totalCal});
     items.forEach((ex,i) => {
       entries.push({id:sessionId+i+1, date:entryDate, type:ex.cat,
         desc:ex.name+(ex.qty>1?' ×'+ex.qty:''),
         prix: detailMode.repas ? (ex.prix||0) : 0,
-        score:ex.score, qty:ex.qty, ml:ex.ml, hydra:ex.hydra, linkedRepas:desc, sessionId, companyPaid});
+        score:ex.score, qty:ex.qty, ml:ex.ml, hydra:ex.hydra, cal:(ex.cal||0)*ex.qty, linkedRepas:desc, sessionId, companyPaid});
     });
     document.getElementById('repas-prix').value='';
     document.getElementById('repas-score').value='5';
@@ -1437,7 +1473,7 @@ function saveSession(mode) {
           desc:ex.name+(ex.qty>1?' ×'+ex.qty:''),
           prix: detailMode.snack ? (ex.prix||0) : (prix/items.length),
           score:ex.score, qty:ex.qty, ml:ex.ml, hydra:ex.hydra,
-          isSnackSession:true, snackGroup:sessionDesc, sessionId:snackSessionId});
+          isSnackSession:true, snackGroup:sessionDesc, sessionId:snackSessionId, cal:(ex.cal||0)*ex.qty});
       });
     }
     document.getElementById('snack-prix-global').value='';
@@ -1504,6 +1540,7 @@ function renderProductGrid(mode) {
       <span class="product-btn-emoji">${info.emoji}</span>
       <span class="product-btn-name">${name}</span>
       <span class="product-btn-score" style="color:${scoreColor(info.score)}">${info.score}/10</span>
+      <span class="product-btn-cal">${info.cal} kcal</span>
     </button>`;
   }).join('');
 }
@@ -1845,7 +1882,8 @@ function renderHydration(now, days) {
 let chartDep, chartSante, chartRep;
 
 // ── Per-chart period state ──
-const chartPeriods = { sante: 7, dep: 7, rep: 7, hydra: 1 };
+const chartPeriods = { sante: 7, dep: 7, rep: 7, hydra: 1, cal: 1 };
+const CAL_THRESHOLD = 2500; // kcal/jour seuil à ne pas dépasser
 
 function setChartPeriod(chart, days, btn) {
   chartPeriods[chart] = days;
@@ -1859,6 +1897,7 @@ function setChartPeriod(chart, days, btn) {
   if(chart==='dep')   renderChartDep(now, days, isDark, gridColor, tickColor);
   if(chart==='rep')   renderChartRep(now, days, isDark);
   if(chart==='hydra') renderHydration(now, days);
+  if(chart==='cal')   renderChartCal(now, days, isDark, gridColor, tickColor);
 }
 
 function buildPeriodLabels(now, days) {
@@ -1957,6 +1996,86 @@ function renderChartRep(now, days, isDark) {
   ].map(([l,c,v])=>`<div><span class="legend-dot" style="background:${c}"></span>${l} — ${v.toFixed(2)} CHF (${Math.round(v/tot*100)}%)</div>`).join('');
 }
 
+let chartCal;
+function renderChartCal(now, days, isDark, gridColor, tickColor) {
+  const {labels, dayKeys, n} = buildPeriodLabels(now, days);
+  const todayStr = now.toDateString();
+
+  // Sum calories per day (from all entries that have cal, avoid double-counting:
+  // repas entry already aggregates cal from items, so only count entries
+  // that are NOT linkedRepas children (those are already included in parent)
+  const getCalForDay = ds => entries
+    .filter(e => new Date(e.date).toDateString()===ds && !e.linkedRepas && (e.cal||0)>0)
+    .reduce((s,e)=>s+(e.cal||0),0);
+
+  const calData = dayKeys.map(ds => getCalForDay(ds));
+
+  // Today KPI
+  const todayCal = getCalForDay(todayStr);
+  const periodCals = calData.filter(v=>v>0);
+  const avgCal = periodCals.length ? Math.round(periodCals.reduce((s,v)=>s+v,0)/periodCals.length) : 0;
+
+  const calTodayEl = document.getElementById('cal-today-val');
+  const calAvgEl = document.getElementById('cal-avg-val');
+  const calBadge = document.getElementById('cal-status-badge');
+
+  if(calTodayEl) {
+    calTodayEl.textContent = todayCal > 0 ? todayCal.toLocaleString('fr-FR') : '—';
+    calTodayEl.style.color = todayCal > CAL_THRESHOLD ? '#e34948' : todayCal > CAL_THRESHOLD*0.85 ? '#eda100' : 'var(--text)';
+  }
+  if(calAvgEl) calAvgEl.textContent = avgCal > 0 ? avgCal.toLocaleString('fr-FR') : '—';
+  if(calBadge) {
+    if(todayCal > 0) {
+      calBadge.style.display = 'block';
+      if(todayCal > CAL_THRESHOLD) {
+        calBadge.innerHTML = `<span class="score-badge badge-bad">🔴 Seuil dépassé aujourd'hui (${(todayCal-CAL_THRESHOLD).toLocaleString('fr-FR')} kcal en trop)</span>`;
+      } else if(todayCal > CAL_THRESHOLD*0.85) {
+        calBadge.innerHTML = `<span class="score-badge badge-avg">⚠️ Approche du seuil — il reste ${(CAL_THRESHOLD-todayCal).toLocaleString('fr-FR')} kcal</span>`;
+      } else {
+        calBadge.innerHTML = `<span class="score-badge badge-good">✅ Apport calorique OK aujourd'hui</span>`;
+      }
+    } else {
+      calBadge.style.display = 'none';
+    }
+  }
+
+  // Chart
+  if(chartCal) chartCal.destroy();
+  chartCal = new Chart(document.getElementById('chart-cal'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Calories',
+          data: calData,
+          backgroundColor: calData.map(v => v > CAL_THRESHOLD ? '#e34948' : v > CAL_THRESHOLD*0.85 ? '#eda100' : '#2a78d6'),
+          borderRadius: 4, borderSkipped: false
+        },
+        {
+          type: 'line',
+          label: 'Seuil',
+          data: Array(n).fill(CAL_THRESHOLD),
+          borderColor: 'rgba(237,161,0,0.6)',
+          borderWidth: 1.5, borderDash: [5,4],
+          pointRadius: 0, fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: v => v.dataset.label === 'Seuil' ? 'Seuil : '+CAL_THRESHOLD+' kcal' : v.raw.toLocaleString('fr-FR')+' kcal' } }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { callback: v => v>=1000?(v/1000).toFixed(1)+'k':v, font:{size:10}, color:tickColor }, grid:{color:gridColor}, border:{display:false} },
+        x: { ticks: { font:{size:10}, color:tickColor, maxRotation: labels.length>10?45:0 }, grid:{display:false}, border:{display:false} }
+      }
+    }
+  });
+}
+
 function renderDashboard() {
   const now = new Date();
   const todayStr = now.toDateString();
@@ -2009,6 +2128,7 @@ function renderDashboard() {
   const gSA = gSF!=null&&gSD!=null?(gSF+gSD)/2 : gSF??gSD;
   drawGauge(gSA, gSF, gSD, filteredG.length);
   renderHydration(now);
+  renderChartCal(now, chartPeriods.cal, isDark, gridColor, tickColor);
 }
 
 let gaugeDays = 7; // current period
